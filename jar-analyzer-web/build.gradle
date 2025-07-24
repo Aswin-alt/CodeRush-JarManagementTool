@@ -1,0 +1,43 @@
+/*
+ * Web UI module - Static assets and frontend resources
+ * This module contains only the frontend web interface (HTML, CSS, JS)
+ * Server-side logic is handled by jar-analyzer-core module
+ */
+
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.gretty' version '4.0.3'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Project dependencies - only core for the backend servlet
+    implementation project(':jar-analyzer-core')
+    implementation project(':jar-analyzer-common')
+    
+    // Servlet container dependencies (provided at runtime)
+    providedCompile libs.servlet.api
+    
+    // Testing
+    testImplementation libs.bundles.testing
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+gretty {
+    httpPort = 8080
+    contextPath = '/jar-analyzer'
+    servletContainer = 'jetty11'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

@@ -1,0 +1,76 @@
+/*
+ * CodeRush JAR Management Tool - Root Build Configuration
+ * Multi-module project for comprehensive JAR analysis and vulnerability scanning
+ */
+
+plugins {
+    id 'java'
+}
+
+// Apply common configuration to all submodules
+subprojects {
+    apply plugin: 'java'
+    
+    repositories {
+        mavenCentral()
+    }
+    
+    // Common Java configuration
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+    
+    // Common dependencies for all modules
+    dependencies {
+        // Logging
+        implementation 'org.slf4j:slf4j-api:2.0.7'
+        implementation 'ch.qos.logback:logback-classic:1.4.8'
+        
+        // Testing
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+        testImplementation 'org.mockito:mockito-core:5.4.0'
+        testImplementation 'org.assertj:assertj-core:3.24.2'
+    }
+    
+    // Common test configuration
+    tasks.named('test') {
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+    
+    // Enable preview features if needed
+    tasks.withType(JavaCompile) {
+        options.compilerArgs += ['--enable-preview']
+    }
+    
+    tasks.withType(Test) {
+        jvmArgs += ['--enable-preview']
+    }
+    
+    tasks.withType(JavaExec) {
+        jvmArgs += ['--enable-preview']
+    }
+}
+
+// Root project tasks
+tasks.register('buildAll') {
+    description = 'Build all modules'
+    group = 'build'
+    dependsOn subprojects.collect { "${it.name}:build" }
+}
+
+tasks.register('testAll') {
+    description = 'Run tests for all modules'
+    group = 'verification'
+    dependsOn subprojects.collect { "${it.name}:test" }
+}
+
+tasks.register('cleanAll') {
+    description = 'Clean all modules'
+    group = 'build'
+    dependsOn subprojects.collect { "${it.name}:clean" }
+}

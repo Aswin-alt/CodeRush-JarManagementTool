@@ -1,0 +1,60 @@
+/*
+ * Core analysis engine - JAR analysis, bytecode inspection, dependency analysis
+ * This module contains the core analysis logic using JDeps, ASM, and Jdeprscan
+ */
+
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Project dependencies
+    api project(':jar-analyzer-common')
+    
+    // ASM for bytecode analysis
+    api 'org.ow2.asm:asm:9.5'
+    api 'org.ow2.asm:asm-tree:9.5'
+    api 'org.ow2.asm:asm-analysis:9.5'
+    api 'org.ow2.asm:asm-util:9.5'
+    
+    // Maven model for dependency parsing
+    api 'org.apache.maven:maven-model:3.9.3'
+    api 'org.apache.maven:maven-model-builder:3.9.3'
+    
+    // XML processing for Maven POM files
+    api 'javax.xml.bind:jaxb-api:2.3.1'
+    api 'org.glassfish.jaxb:jaxb-runtime:4.0.3'
+    
+    // File processing
+    api 'org.apache.commons:commons-compress:1.23.0'
+    
+    // Servlet API for web endpoints
+    api 'javax.servlet:javax.servlet-api:4.0.1'
+    
+    // JSON processing
+    api 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+    
+    // Logging
+    api 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'ch.qos.logback:logback-classic:1.4.8'
+    
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+    testImplementation 'org.mockito:mockito-core:5.4.0'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

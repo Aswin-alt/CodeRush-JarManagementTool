@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeRush JAR Analyzer</title>
+    
+    <!-- CSS3 Stylesheets -->
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    
+    <!-- Progressive Web App Meta -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Comprehensive JAR analysis tool with vulnerability scanning">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="static/assets/favicon.svg">
+</head>
+<body>
+    <div id="app">
+        <!-- Header Navigation -->
+        <header class="app-header">
+            <nav class="main-nav">
+                <div class="nav-brand">
+                    <h1>CodeRush JAR Analyzer</h1>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#upload" class="nav-link">Upload</a></li>
+                    <li><a href="#analysis" class="nav-link">Analysis</a></li>
+                    <li><a href="#reports" class="nav-link">Reports</a></li>
+                    <li><a href="#api" class="nav-link">API</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- File Upload Section -->
+            <section id="upload-section" class="section">
+                <div class="container">
+                    <h2>Upload Files for Analysis</h2>
+                    <div id="file-upload-area" class="upload-area">
+                        <p>Drag and drop your files here or click to select</p>
+                        <input type="file" id="file-input" multiple accept=".jar,.zip" hidden>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analysis Dashboard -->
+            <section id="analysis-section" class="section">
+                <div class="container">
+                    <h2>Analysis Dashboard</h2>
+                    <div id="analysis-grid" class="analysis-grid">
+                        <!-- Analysis components will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports-section" class="section">
+                <div class="container">
+                    <h2>Analysis Reports</h2>
+                    <div id="reports-container" class="reports-container">
+                        <!-- Reports will be loaded here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Progress Indicator -->
+        <div id="progress-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Analysis in Progress</h3>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="progress-text">Initializing...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules (ES6+) -->
+    <script type="module" src="static/js/app.js"></script>
+    <script type="module" src="static/js/api.js"></script>
+    <script type="module" src="static/js/components/file-upload.js"></script>
+    <script type="module" src="static/js/components/analysis-dashboard.js"></script>
+    <script type="module" src="static/js/utils/websocket-client.js"></script>
+</body>
+</html>

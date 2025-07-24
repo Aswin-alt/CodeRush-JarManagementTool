@@ -1,0 +1,17 @@
+/*
+ * CodeRush JAR Management Tool
+ * Multi-module project for JAR analysis, vulnerability scanning, and bytecode inspection
+ */
+
+plugins {
+    // Apply the foojay-resolver plugin to allow automatic download of JDKs
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'CodeRush-JarManagementTool'
+
+// Core modules
+include('jar-analyzer-core')      // Core analysis engine
+include('jar-analyzer-web')       // Web interface and REST API
+include('jar-analyzer-cli')       // Command-line interface
+include('jar-analyzer-common')    // Shared utilities and models
