@@ -3,6 +3,7 @@ package com.coderush.jaranalyzer.core.servlet;
 import com.coderush.jaranalyzer.common.model.AnalysisType;
 import com.coderush.jaranalyzer.common.model.AnalysisRequest;
 import com.coderush.jaranalyzer.common.model.AnalysisResult;
+import com.coderush.jaranalyzer.common.model.AnalysisStatus;
 import com.coderush.jaranalyzer.common.exception.AnalysisException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

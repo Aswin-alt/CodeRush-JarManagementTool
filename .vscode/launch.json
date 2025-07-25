@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug JAR Analyzer",
+            "request": "launch",
+            "mainClass": "com.coderush.jaranalyzer.App",
+            "projectName": "jar-analyzer-core",
+            "args": [],
+            "console": "integratedTerminal"
+        }
+    ]
+}

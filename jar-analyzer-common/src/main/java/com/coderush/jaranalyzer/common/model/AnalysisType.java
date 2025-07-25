@@ -39,7 +39,13 @@ public enum AnalysisType {
      * Feature 6: Ant Changes for JAR Upgrade (Future)
      * Generates Ant build script changes for JAR upgrades.
      */
-    ANT_CHANGES("ant-changes", "Ant Changes for JAR Upgrade");
+    ANT_CHANGES("ant-changes", "Ant Changes for JAR Upgrade"),
+    
+    /**
+     * Utility: Project JAR Scanning
+     * Discovers and validates JAR files in project directories.
+     */
+    PROJECT_SCAN("project-scan", "Project JAR Scanning");
     
     private final String code;
     private final String displayName;
