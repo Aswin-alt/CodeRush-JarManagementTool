@@ -1,6 +1,7 @@
 package com.coderush.jaranalyzer.core.servlet;
 
 import com.coderush.jaranalyzer.common.model.AnalysisType;
+import com.coderush.jaranalyzer.common.model.AnalysisStatus;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

@@ -20,6 +20,7 @@ public class AnalysisException extends Exception {
     public enum ErrorCode {
         // Input-related errors
         INVALID_INPUT("INVALID_INPUT", "Invalid input provided"),
+        INPUT_NOT_FOUND("INPUT_NOT_FOUND", "Required input not found"),
         FILE_NOT_FOUND("FILE_NOT_FOUND", "Required file not found"),
         CORRUPTED_FILE("CORRUPTED_FILE", "File is corrupted or unreadable"),
         UNSUPPORTED_FORMAT("UNSUPPORTED_FORMAT", "Unsupported file format"),
@@ -29,6 +30,9 @@ public class AnalysisException extends Exception {
         TOOL_UNAVAILABLE("TOOL_UNAVAILABLE", "Required analysis tool unavailable"),
         INSUFFICIENT_MEMORY("INSUFFICIENT_MEMORY", "Insufficient memory for analysis"),
         TIMEOUT("TIMEOUT", "Analysis operation timed out"),
+        
+        // I/O errors
+        IO_ERROR("IO_ERROR", "Input/output error occurred"),
         
         // External service errors
         NETWORK_ERROR("NETWORK_ERROR", "Network error during external service call"),
