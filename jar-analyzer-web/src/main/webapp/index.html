@@ -3,31 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeRush JAR Analyzer</title>
-    
-    <!-- CSS3 Stylesheets -->
-    <link rel="stylesheet" href="static/css/main.css">
-    <link rel="stylesheet" href="static/css/components.css">
-    
-    <!-- Progressive Web App Meta -->
-    <meta name="theme-color" content="#2563eb">
-    <meta name="description" content="Comprehensive JAR analysis tool with vulnerability scanning">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="static/assets/favicon.svg">
+    <title>JAR Management Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div id="app">
-        <!-- Header Navigation -->
-        <header class="app-header">
-            <nav class="main-nav">
-                <div class="nav-brand">
-                    <h1>CodeRush JAR Analyzer</h1>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <h1>JAR Management Tool</h1>
                 </div>
-                <ul class="nav-menu">
-                    <li><a href="#upload" class="nav-link">Upload</a></li>
-                    <li><a href="#analysis" class="nav-link">Analysis</a></li>
-                    <li><a href="#reports" class="nav-link">Reports</a></li>
+                <div class="version">v1.0.0</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="welcome-section">
+                <h2>Welcome to JAR Management Tool</h2>
+                <p>Comprehensive analysis and management of JAR files and Java projects</p>
+            </div>
+
+            <!-- Feature Cards -->
+            <div class="feature-grid">
+                <!-- JAR Comparison Card -->
+                <div class="feature-card" onclick="navigateToFeature('jar-comparison')">
+                    <div class="card-icon">
+                        <i class="fas fa-code-compare"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>JAR Comparison</h3>
+                        <p>Compare two JAR versions to identify all changes at class and method level using ASM bytecode analysis</p>
+                        <div class="card-features">
+                            <span class="feature-tag">Class-level changes</span>
+                            <span class="feature-tag">Method signatures</span>
+                            <span class="feature-tag">Binary compatibility</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- Project Analysis Card -->
+                <div class="feature-card" onclick="navigateToFeature('project-analysis')">
+                    <div class="card-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Project Analysis (ZIP)</h3>
+                        <p>Comprehensive analysis of Java projects including upgrade impact, unused JARs, deprecated APIs, and vulnerabilities</p>
+                        <div class="card-features">
+                            <span class="feature-tag">Upgrade Impact</span>
+                            <span class="feature-tag">Unused JARs</span>
+                            <span class="feature-tag">Deprecated APIs</span>
+                            <span class="feature-tag">Vulnerabilities</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- Ant Generator Card -->
+                <div class="feature-card coming-soon" onclick="showComingSoon()">
+                    <div class="card-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Ant Build Generator</h3>
+                        <p>Generate Ant build scripts with updated JAR dependencies based on analysis results</p>
+                        <div class="card-features">
+                            <span class="feature-tag">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-section">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalAnalyses">0</div>
+                    <div class="stat-label">Total Analyses</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="jarComparisons">0</div>
+                    <div class="stat-label">JAR Comparisons</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="projectScans">0</div>
+                    <div class="stat-label">Project Scans</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 JAR Management Tool. Built with Java 11, ASM, and modern web technologies.</p>
+        </footer>
+    </div>
+
+    <!-- Coming Soon Modal -->
+    <div id="comingSoonModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <i class="fas fa-clock"></i>
+                <h2>Coming Soon</h2>
+            </div>
+            <p>The Ant Build Generator feature is currently under development and will be available in a future release.</p>
+            <div class="modal-features">
+                <h4>Planned Features:</h4>
+                <ul>
+                    <li>Automatic build.xml generation</li>
+                    <li>Dependency management integration</li>
+                    <li>JAR version conflict resolution</li>
+                    <li>Build script optimization</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
                     <li><a href="#api" class="nav-link">API</a></li>
                 </ul>
             </nav>

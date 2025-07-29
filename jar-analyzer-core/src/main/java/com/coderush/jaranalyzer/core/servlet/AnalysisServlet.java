@@ -1,13 +1,18 @@
 package com.coderush.jaranalyzer.core.servlet;
 
-import com.coderush.jaranalyzer.common.model.AnalysisType;
-import com.coderush.jaranalyzer.common.model.AnalysisRequest;
-import com.coderush.jaranalyzer.common.model.AnalysisResult;
-import com.coderush.jaranalyzer.common.model.AnalysisStatus;
-import com.coderush.jaranalyzer.common.exception.AnalysisException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -16,21 +21,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.coderush.jaranalyzer.common.exception.AnalysisException;
+import com.coderush.jaranalyzer.common.model.AnalysisResult;
+import com.coderush.jaranalyzer.common.model.AnalysisStatus;
+import com.coderush.jaranalyzer.common.model.AnalysisType;
+import com.coderush.jaranalyzer.common.model.comparison.JarComparisonRequest;
+import com.coderush.jaranalyzer.common.model.comparison.JarComparisonResult;
+import com.coderush.jaranalyzer.core.analyzer.JarComparisonAnalyzer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Main Analysis Servlet - Entry point for all JAR analysis operations
@@ -218,16 +222,54 @@ public class AnalysisServlet extends HttpServlet {
      * Creates new analysis request and starts asynchronous processing
      */
     private void handleStartAnalysis(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
+            throws IOException, ServletException {
         
         logger.info("Starting new analysis request");
         
         try {
-            // Parse request body to get analysis parameters
-            String requestBody = request.getReader().lines()
-                .collect(Collectors.joining(System.lineSeparator()));
+            String contentType = request.getContentType();
+            Map<String, Object> requestData = new HashMap<>();
             
-            Map<String, Object> requestData = objectMapper.readValue(requestBody, Map.class);
+            // Handle multipart requests (for file uploads like JAR comparison)
+            if (contentType != null && contentType.toLowerCase().startsWith("multipart/form-data")) {
+                logger.info("Processing multipart analysis request");
+                
+                Collection<Part> parts = request.getParts();
+                for (Part part : parts) {
+                    if (part.getName() != null) {
+                        if ("analysisType".equals(part.getName())) {
+                            // Read analysis type from form field
+                            String analysisTypeValue = new String(part.getInputStream().readAllBytes());
+                            requestData.put("analysisType", analysisTypeValue);
+                        } else if ("options".equals(part.getName())) {
+                            // Read options from form field
+                            String optionsValue = new String(part.getInputStream().readAllBytes());
+                            try {
+                                Map<String, Object> options = objectMapper.readValue(optionsValue, Map.class);
+                                requestData.put("options", options);
+                            } catch (Exception e) {
+                                logger.warn("Failed to parse options JSON: {}", optionsValue, e);
+                                requestData.put("options", new HashMap<>());
+                            }
+                        } else if (part.getSize() > 0) {
+                            // Handle file parts
+                            String fileName = getFileName(part);
+                            if (fileName != null && !fileName.trim().isEmpty()) {
+                                // Store file data directly in request
+                                byte[] fileData = part.getInputStream().readAllBytes();
+                                requestData.put(part.getName(), fileData);
+                                requestData.put(part.getName() + "_filename", fileName);
+                                logger.info("Received file: {} ({} bytes)", fileName, fileData.length);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Handle JSON requests
+                String requestBody = request.getReader().lines()
+                    .collect(Collectors.joining(System.lineSeparator()));
+                requestData = objectMapper.readValue(requestBody, Map.class);
+            }
             
             // Extract analysis type
             String analysisTypeStr = (String) requestData.get("analysisType");
@@ -236,7 +278,7 @@ public class AnalysisServlet extends HttpServlet {
                     "analysisType is required");
                 return;
             }
-            
+
             AnalysisType analysisType;
             try {
                 analysisType = AnalysisType.valueOf(analysisTypeStr.toUpperCase());
@@ -245,10 +287,10 @@ public class AnalysisServlet extends HttpServlet {
                     "Invalid analysisType: " + analysisTypeStr);
                 return;
             }
-            
+
             // Generate unique request ID
             String requestId = UUID.randomUUID().toString();
-            
+
             // Create analysis context
             AnalysisRequestContext context = new AnalysisRequestContext(
                 requestId,
@@ -256,10 +298,10 @@ public class AnalysisServlet extends HttpServlet {
                 requestData,
                 LocalDateTime.now()
             );
-            
+
             // Store request context
             analysisRequests.put(requestId, context);
-            
+
             // Start asynchronous analysis
             CompletableFuture<AnalysisResult> analysisFuture = CompletableFuture
                 .supplyAsync(() -> executeAnalysis(context), analysisExecutor)
@@ -274,7 +316,7 @@ public class AnalysisServlet extends HttpServlet {
                         analysisResults.put(requestId, result);
                     }
                 });
-            
+
             context.setAnalysisFuture(analysisFuture);
             context.setStatus(AnalysisStatus.RUNNING);
             
@@ -283,7 +325,7 @@ public class AnalysisServlet extends HttpServlet {
             result.put("requestId", requestId);
             result.put("analysisType", analysisType);
             result.put("status", AnalysisStatus.RUNNING);
-            result.put("startTime", context.getStartTime());
+            result.put("createdAt", context.getCreatedAt());
             
             sendJsonResponse(response, HttpServletResponse.SC_ACCEPTED, result);
             
@@ -334,7 +376,9 @@ public class AnalysisServlet extends HttpServlet {
         status.put("requestId", context.getRequestId());
         status.put("analysisType", context.getAnalysisType());
         status.put("status", context.getStatus());
-        status.put("startTime", context.getStartTime());
+        status.put("createdAt", context.getCreatedAt());
+        status.put("progress", context.getCurrentProgress());
+        status.put("message", context.getCurrentMessage());
         
         if (context.getStatus() == AnalysisStatus.FAILED && context.getError() != null) {
             status.put("error", context.getError());
@@ -449,22 +493,134 @@ public class AnalysisServlet extends HttpServlet {
             context.getAnalysisType(), context.getRequestId());
         
         try {
-            // TODO: Integrate with jar-analyzer-core module
-            // For now, return a mock result
-            Thread.sleep(2000); // Simulate processing time
+            AnalysisType analysisType = context.getAnalysisType();
+            Map<String, Object> requestData = context.getRequestData();
             
-            return new MockAnalysisResult(
-                context.getRequestId(),
-                context.getAnalysisType(),
-                "Analysis completed successfully",
-                LocalDateTime.now()
-            );
+            switch (analysisType) {
+                case JAR_COMPARISON:
+                    return executeJarComparison(context, requestData);
+                    
+                default:
+                    // For other analysis types, return mock result for now
+                    Thread.sleep(2000); // Simulate processing time
+                    return new MockAnalysisResult(
+                        context.getRequestId(),
+                        context.getAnalysisType(),
+                        "Analysis completed successfully",
+                        LocalDateTime.now()
+                    );
+            }
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(new AnalysisException(context.getAnalysisType(), 
                 "Analysis was interrupted", e));
+        } catch (Exception e) {
+            logger.error("Analysis execution failed for request: {}", context.getRequestId(), e);
+            throw new RuntimeException(new AnalysisException(context.getAnalysisType(), 
+                "Analysis execution failed: " + e.getMessage(), e));
         }
+    }
+    
+    /**
+     * Execute JAR comparison analysis
+     */
+    private AnalysisResult executeJarComparison(AnalysisRequestContext context, Map<String, Object> requestData) {
+        logger.info("Executing JAR comparison for request: {}", context.getRequestId());
+        
+        try {
+            // Extract file data
+            byte[] oldJarData = (byte[]) requestData.get("oldJar");
+            byte[] newJarData = (byte[]) requestData.get("newJar");
+            String oldJarFilename = (String) requestData.get("oldJar_filename");
+            String newJarFilename = (String) requestData.get("newJar_filename");
+            
+            if (oldJarData == null || newJarData == null) {
+                throw new AnalysisException(AnalysisType.JAR_COMPARISON, 
+                    "Both oldJar and newJar files are required");
+            }
+            
+            // Create temporary files from byte arrays
+            java.io.File tempOldJar = createTempFile(oldJarData, oldJarFilename != null ? oldJarFilename : "old.jar");
+            java.io.File tempNewJar = createTempFile(newJarData, newJarFilename != null ? newJarFilename : "new.jar");
+            
+            try {
+                // Extract options
+                Map<String, Object> options = (Map<String, Object>) requestData.getOrDefault("options", new HashMap<>());
+                
+                // Create metadata map for the request
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("includePrivateMembers", getBooleanOption(options, "includePrivateMembers", true));
+                metadata.put("includePackageClasses", getBooleanOption(options, "includePackageClasses", true));
+                metadata.put("analyzeFieldChanges", getBooleanOption(options, "analyzeFieldChanges", true));
+                metadata.put("analyzeAnnotations", getBooleanOption(options, "analyzeAnnotations", true));
+                
+                // Create JAR comparison request
+                JarComparisonRequest comparisonRequest = new JarComparisonRequest(
+                    tempOldJar,
+                    tempNewJar,
+                    metadata
+                );
+                
+                // Create analyzer and service
+                com.coderush.jaranalyzer.core.service.comparison.impl.AsmJarComparisonService comparisonService = 
+                    new com.coderush.jaranalyzer.core.service.comparison.impl.AsmJarComparisonService();
+                JarComparisonAnalyzer analyzer = new JarComparisonAnalyzer(comparisonService);
+                
+                // Execute analysis
+                context.setCurrentProgress(10, "Analyzing JAR files...");
+                JarComparisonResult result = analyzer.analyze(comparisonRequest);
+                context.setCurrentProgress(100, "Analysis complete");
+                
+                return result;
+                
+            } finally {
+                // Clean up temporary files
+                if (tempOldJar.exists()) {
+                    tempOldJar.delete();
+                }
+                if (tempNewJar.exists()) {
+                    tempNewJar.delete();
+                }
+            }
+            
+        } catch (AnalysisException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            logger.error("JAR comparison failed", e);
+            throw new RuntimeException(new AnalysisException(AnalysisType.JAR_COMPARISON, 
+                "JAR comparison failed: " + e.getMessage(), e));
+        }
+    }
+    
+    /**
+     * Create temporary file from byte array
+     */
+    private java.io.File createTempFile(byte[] data, String originalFilename) throws IOException {
+        String prefix = "jar_analysis_";
+        String suffix = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        
+        java.io.File tempFile = java.io.File.createTempFile(prefix, suffix);
+        tempFile.deleteOnExit();
+        
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
+            fos.write(data);
+        }
+        
+        return tempFile;
+    }
+    
+    /**
+     * Extract boolean option from options map
+     */
+    private boolean getBooleanOption(Map<String, Object> options, String key, boolean defaultValue) {
+        Object value = options.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        } else if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return defaultValue;
     }
     
     /**
@@ -522,5 +678,71 @@ public class AnalysisServlet extends HttpServlet {
         error.put("timestamp", LocalDateTime.now());
         
         sendJsonResponse(response, status, error);
+    }
+    
+    /**
+     * Inner class to hold analysis request context
+     */
+    private static class AnalysisRequestContext {
+        private final String requestId;
+        private final AnalysisType analysisType;
+        private final Map<String, Object> requestData;
+        private final LocalDateTime createdAt;
+        private AnalysisStatus status;
+        private String error;
+        private CompletableFuture<AnalysisResult> analysisFuture;
+        private int currentProgress = 0;
+        private String currentMessage = "Initializing...";
+        
+        public AnalysisRequestContext(String requestId, AnalysisType analysisType, 
+                Map<String, Object> requestData, LocalDateTime createdAt) {
+            this.requestId = requestId;
+            this.analysisType = analysisType;
+            this.requestData = requestData;
+            this.createdAt = createdAt;
+            this.status = AnalysisStatus.QUEUED;
+        }
+        
+        // Getters
+        public String getRequestId() { return requestId; }
+        public AnalysisType getAnalysisType() { return analysisType; }
+        public Map<String, Object> getRequestData() { return requestData; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
+        public AnalysisStatus getStatus() { return status; }
+        public String getError() { return error; }
+        public CompletableFuture<AnalysisResult> getAnalysisFuture() { return analysisFuture; }
+        public int getCurrentProgress() { return currentProgress; }
+        public String getCurrentMessage() { return currentMessage; }
+        
+        // Setters
+        public void setStatus(AnalysisStatus status) { this.status = status; }
+        public void setError(String error) { this.error = error; }
+        public void setAnalysisFuture(CompletableFuture<AnalysisResult> analysisFuture) { 
+            this.analysisFuture = analysisFuture; 
+        }
+        public void setCurrentProgress(int progress, String message) {
+            this.currentProgress = progress;
+            this.currentMessage = message != null ? message : this.currentMessage;
+        }
+    }
+    
+    /**
+     * Mock analysis result for non-implemented analysis types
+     */
+    private static class MockAnalysisResult extends AnalysisResult {
+        public MockAnalysisResult(String requestId, AnalysisType analysisType, 
+                String description, LocalDateTime timestamp) {
+            super(requestId, analysisType, timestamp, timestamp, new HashMap<>(), new ArrayList<>());
+        }
+        
+        @Override
+        public String getSummary() {
+            return "Mock analysis completed successfully";
+        }
+        
+        @Override
+        public int getTotalFindings() {
+            return 0;
+        }
     }
 }
