@@ -1,16 +1,17 @@
 package com.coderush.jaranalyzer.core.scanner;
 
-import com.coderush.jaranalyzer.common.model.AnalysisType;
-import com.coderush.jaranalyzer.common.exception.AnalysisException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
-import java.nio.file.Files;
-import java.util.List;
-import java.util.stream.Stream;
-import java.util.Arrays;
+import com.coderush.jaranalyzer.common.exception.AnalysisException;
+import com.coderush.jaranalyzer.common.model.AnalysisType;
 
 /**
  * Project scanner utility for discovering JAR files and project structure.
@@ -76,7 +77,7 @@ public class ProjectJarScanner {
                 .filter(Files::isRegularFile)
                 .filter(this::isJarFile)
                 .sorted()
-                .toList();
+                .collect(Collectors.toList());
                 
             logger.info("Found {} JAR files in project: {}", jarFiles.size(), projectPath);
             
@@ -122,7 +123,7 @@ public class ProjectJarScanner {
                 }
             })
             .sorted()
-            .toList();
+            .collect(Collectors.toList());
     }
     
     /**

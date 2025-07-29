@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <display-name>JAR Analyzer Web Application</display-name>
+    <description>
+        JAR Analysis Tool Web Interface - provides web UI for analyzing JAR files,
+        dependency analysis, vulnerability scanning, and upgrade impact assessment.
+    </description>
+
+    <!-- Main Analysis Servlet -->
+    <servlet>
+        <servlet-name>AnalysisServlet</servlet-name>
+        <servlet-class>com.coderush.jaranalyzer.core.servlet.AnalysisServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+        <multipart-config>
+            <max-file-size>104857600</max-file-size>      <!-- 100 MB -->
+            <max-request-size>524288000</max-request-size> <!-- 500 MB -->
+            <file-size-threshold>10485760</file-size-threshold> <!-- 10 MB -->
+        </multipart-config>
+    </servlet>
+
+    <!-- Servlet Mappings -->
+    <servlet-mapping>
+        <servlet-name>AnalysisServlet</servlet-name>
+        <url-pattern>/api/analysis/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>AnalysisServlet</servlet-name>
+        <url-pattern>/api/upload</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>AnalysisServlet</servlet-name>
+        <url-pattern>/api/features</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>AnalysisServlet</servlet-name>
+        <url-pattern>/api/health</url-pattern>
+    </servlet-mapping>
+
+    <!-- Welcome File List -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- Error Pages -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error/404.html</location>
+    </error-page>
+    
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error/500.html</location>
+    </error-page>
+
+    <!-- Security Configuration -->
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>API Endpoints</web-resource-name>
+            <url-pattern>/api/*</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
+            <http-method>OPTIONS</http-method>
+        </web-resource-collection>
+        <!-- No auth-constraint means accessible to all -->
+    </security-constraint>
+
+    <!-- Session Configuration -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>false</secure>
+        </cookie-config>
+    </session-config>
+
+</web-app>

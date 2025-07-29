@@ -1,6 +1,7 @@
 package com.coderush.jaranalyzer.common.model;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,7 +29,7 @@ public abstract class AnalysisRequest {
         this.requestId = UUID.randomUUID().toString();
         this.analysisType = analysisType;
         this.timestamp = LocalDateTime.now();
-        this.metadata = metadata != null ? Map.copyOf(metadata) : Map.of();
+        this.metadata = metadata != null ? new HashMap<>(metadata) : new HashMap<>();
     }
     
     /**
