@@ -119,7 +119,8 @@ public class AnalysisServlet extends HttpServlet {
                 handleGetFeatures(request, response);
             } else if (pathInfo.equals("/health")) {
                 handleGetHealth(request, response);
-            } else if (pathInfo.startsWith("/analysis/")) {
+            } else if (pathInfo.startsWith("/")) {
+                // Handle /api/analysis/* paths - pathInfo will be like /{analysisId}/status or /{analysisId}/result
                 handleGetAnalysis(request, response, pathInfo);
             } else {
                 sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
@@ -148,9 +149,9 @@ public class AnalysisServlet extends HttpServlet {
         try {
             if (pathInfo == null || pathInfo.equals("/upload")) {
                 handleFileUpload(request, response);
-            } else if (pathInfo.equals("/analysis/start")) {
+            } else if (pathInfo.equals("/start")) {
                 handleStartAnalysis(request, response);
-            } else if (pathInfo.matches("/analysis/.+/cancel")) {
+            } else if (pathInfo.matches("/.+/cancel")) {
                 handleCancelAnalysis(request, response, pathInfo);
             } else {
                 sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, 
@@ -342,14 +343,15 @@ public class AnalysisServlet extends HttpServlet {
     private void handleGetAnalysis(HttpServletRequest request, HttpServletResponse response, String pathInfo) 
             throws IOException {
         
+        // PathInfo will be like "/{analysisId}/status" or "/{analysisId}/result"
         String[] pathParts = pathInfo.split("/");
-        if (pathParts.length < 3) {
+        if (pathParts.length < 2) {
             sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
                 "Invalid analysis path");
             return;
         }
         
-        String requestId = pathParts[2];
+        String requestId = pathParts[1]; // First part after the leading slash
         AnalysisRequestContext context = analysisRequests.get(requestId);
         
         if (context == null) {
@@ -359,10 +361,13 @@ public class AnalysisServlet extends HttpServlet {
         }
         
         // Check if requesting status or result
-        if (pathParts.length > 3 && "status".equals(pathParts[3])) {
+        if (pathParts.length > 2 && "status".equals(pathParts[2])) {
             handleGetAnalysisStatus(response, context);
-        } else {
+        } else if (pathParts.length > 2 && "result".equals(pathParts[2])) {
             handleGetAnalysisResult(response, context);
+        } else {
+            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                "Invalid analysis endpoint. Use /status or /result");
         }
     }
     
@@ -423,8 +428,9 @@ public class AnalysisServlet extends HttpServlet {
     private void handleCancelAnalysis(HttpServletRequest request, HttpServletResponse response, String pathInfo) 
             throws IOException {
         
+        // PathInfo will be like "/{analysisId}/cancel"
         String[] pathParts = pathInfo.split("/");
-        String requestId = pathParts[2];
+        String requestId = pathParts[1]; // First part after the leading slash
         
         AnalysisRequestContext context = analysisRequests.get(requestId);
         if (context == null) {

@@ -236,7 +236,7 @@ class JarComparison {
             }
             
             const result = await response.json();
-            this.analysisId = result.analysisId;
+            this.analysisId = result.requestId;
             
             this.updateProgress(10, 'Analysis started...');
             this.startProgressMonitoring();
@@ -350,6 +350,15 @@ class JarComparison {
      * Display comparison results
      */
     displayResults(results) {
+        console.log('Displaying results:', results);
+        console.log('Number of changes:', results.changes?.length || 0);
+        console.log('Results structure check:');
+        console.log('- Has changes array:', !!results.changes);
+        console.log('- Changes is array:', Array.isArray(results.changes));
+        if (results.changes && results.changes.length > 0) {
+            console.log('- First change:', results.changes[0]);
+        }
+        
         // Update header with JAR names
         document.getElementById('oldJarName').textContent = this.files.old.name;
         document.getElementById('newJarName').textContent = this.files.new.name;
@@ -369,10 +378,10 @@ class JarComparison {
      */
     updateSummaryStats(results) {
         const changes = results.changes || [];
-        const breakingChanges = changes.filter(change => change.impact === 'BREAKING').length;
+        const breakingChanges = changes.filter(change => change.compatibilityImpact === 'BREAKING').length;
         const totalChanges = changes.length;
         const classesAffected = new Set(changes.map(change => change.className)).size;
-        const duration = results.analysisInfo?.duration || 0;
+        const duration = results.durationMs || 0;
         
         document.getElementById('breakingCount').textContent = breakingChanges;
         document.getElementById('totalCount').textContent = totalChanges;
@@ -384,6 +393,7 @@ class JarComparison {
      * Display changes in Git-like diff format
      */
     displayChanges(changes) {
+        console.log('Displaying changes:', changes.length, 'changes');
         const container = document.getElementById('changesContainer');
         
         if (changes.length === 0) {
@@ -398,6 +408,7 @@ class JarComparison {
         }
         
         container.innerHTML = changes.map(change => this.renderChangeItem(change)).join('');
+        console.log('Changes rendered, applying filters...');
         this.applyFilters();
     }
     
@@ -406,16 +417,25 @@ class JarComparison {
      */
     renderChangeItem(change) {
         const typeClass = change.type.toLowerCase();
-        const impactClass = change.impact.toLowerCase();
+        const impactClass = change.compatibilityImpact.toLowerCase();
         
         let typeIcon = '';
         switch (change.type) {
+            case 'METHOD_ADDED':
+            case 'FIELD_ADDED':
+            case 'CLASS_ADDED':
             case 'ADDED':
                 typeIcon = 'fas fa-plus';
                 break;
+            case 'METHOD_REMOVED':
+            case 'FIELD_REMOVED':
+            case 'CLASS_REMOVED':
             case 'REMOVED':
                 typeIcon = 'fas fa-minus';
                 break;
+            case 'METHOD_MODIFIED':
+            case 'FIELD_MODIFIED':
+            case 'CLASS_MODIFIED':
             case 'MODIFIED':
                 typeIcon = 'fas fa-edit';
                 break;
@@ -424,14 +444,14 @@ class JarComparison {
         }
         
         return `
-            <div class="change-item" data-type="${change.type}" data-impact="${change.impact}" data-class="${change.className}">
+            <div class="change-item" data-type="${change.type}" data-impact="${change.compatibilityImpact}" data-class="${change.className}">
                 <div class="change-header">
                     <span class="change-type ${typeClass}">
                         <i class="${typeIcon}"></i>
                         ${change.type}
                     </span>
                     <span class="change-class">${change.className}</span>
-                    <span class="change-impact ${impactClass}">${change.impact}</span>
+                    <span class="change-impact ${impactClass}">${change.compatibilityImpact}</span>
                     <i class="fas fa-chevron-right expand-icon"></i>
                 </div>
                 <div class="change-details">
@@ -447,11 +467,11 @@ class JarComparison {
      * Render change diff in Git-like format
      */
     renderChangeDiff(change) {
-        if (!change.details || change.details.length === 0) {
+        if (!change.reasons || change.reasons.length === 0) {
             return '';
         }
         
-        const diffLines = change.details.map(detail => {
+        const diffLines = change.reasons.map(detail => {
             let lineClass = 'context';
             let prefix = ' ';
             
@@ -520,6 +540,8 @@ class JarComparison {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         
         const changeItems = document.querySelectorAll('.change-item');
+        console.log('Applying filters to', changeItems.length, 'items');
+        console.log('Filters: type=', typeFilter, 'impact=', impactFilter, 'search=', searchTerm);
         
         changeItems.forEach(item => {
             const type = item.dataset.type;
@@ -529,12 +551,12 @@ class JarComparison {
             let visible = true;
             
             // Apply type filter
-            if (typeFilter && typeFilter !== type) {
+            if (typeFilter && typeFilter !== 'all' && typeFilter !== type) {
                 visible = false;
             }
             
-            // Apply impact filter
-            if (impactFilter && impactFilter !== impact) {
+            // Apply impact filter  
+            if (impactFilter && impactFilter !== 'all' && impactFilter !== impact) {
                 visible = false;
             }
             
@@ -545,6 +567,10 @@ class JarComparison {
             
             item.style.display = visible ? 'block' : 'none';
         });
+        
+        // Count visible items
+        const visibleItems = document.querySelectorAll('.change-item[style="display: block;"], .change-item:not([style*="display: none"])');
+        console.log('Visible items after filtering:', visibleItems.length);
     }
     
     /**
@@ -613,7 +639,7 @@ class JarComparison {
                 
                 <div class="summary">
                     <div class="stat">
-                        <div style="font-size: 2rem; font-weight: bold; color: #dc3545;">${changes.filter(c => c.impact === 'BREAKING').length}</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #dc3545;">${changes.filter(c => c.compatibilityImpact === 'BREAKING').length}</div>
                         <div>Breaking Changes</div>
                     </div>
                     <div class="stat">
@@ -625,7 +651,7 @@ class JarComparison {
                         <div>Classes Affected</div>
                     </div>
                     <div class="stat">
-                        <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">${this.formatDuration(results.analysisInfo?.duration || 0)}</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">${this.formatDuration(results.durationMs || 0)}</div>
                         <div>Analysis Time</div>
                     </div>
                 </div>
@@ -634,11 +660,11 @@ class JarComparison {
                 ${changes.map(change => `
                     <div class="change">
                         <div class="change-header ${change.type.toLowerCase()}">
-                            ${change.type}: ${change.className} (${change.impact})
+                            ${change.type}: ${change.className} (${change.compatibilityImpact})
                         </div>
                         <div class="change-details">
                             <p>${change.description || 'No description available'}</p>
-                            ${change.details ? `<pre>${change.details.join('\\n')}</pre>` : ''}
+                            ${change.reasons ? `<pre>${change.reasons.join('\\n')}</pre>` : ''}
                         </div>
                     </div>
                 `).join('')}
