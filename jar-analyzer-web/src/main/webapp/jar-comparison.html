@@ -205,30 +205,104 @@
                 <div class="filter-controls">
                     <div class="filter-group">
                         <label>Filter by Change Type:</label>
-                        <select id="changeTypeFilter">
-                            <option value="all">All Changes</option>
-                            <option value="CLASS_ADDED">Classes Added</option>
-                            <option value="CLASS_REMOVED">Classes Removed</option>
-                            <option value="METHOD_ADDED">Methods Added</option>
-                            <option value="METHOD_REMOVED">Methods Removed</option>
-                            <option value="FIELD_ADDED">Fields Added</option>
-                            <option value="FIELD_REMOVED">Fields Removed</option>
-                        </select>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-dropdown" id="changeTypeMultiselect">
+                                <div class="multiselect-button" tabindex="0">
+                                    <span class="multiselect-text">Select Change Types</span>
+                                    <span class="multiselect-arrow">▼</span>
+                                </div>
+                                <div class="multiselect-options">
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="CLASS_ADDED" data-label="Classes Added">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Classes Added</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="CLASS_REMOVED" data-label="Classes Removed">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Classes Removed</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="METHOD_ADDED" data-label="Methods Added">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Methods Added</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="METHOD_REMOVED" data-label="Methods Removed">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Methods Removed</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="FIELD_ADDED" data-label="Fields Added">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Fields Added</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="FIELD_REMOVED" data-label="Fields Removed">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Fields Removed</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="filter-group">
                         <label>Filter by Impact:</label>
-                        <select id="impactFilter">
-                            <option value="all">All Impact Levels</option>
-                            <option value="BREAKING">Breaking Changes</option>
-                            <option value="LOW">Low Impact</option>
-                            <option value="NONE">No Impact</option>
-                        </select>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-dropdown" id="impactMultiselect">
+                                <div class="multiselect-button" tabindex="0">
+                                    <span class="multiselect-text">Select Impact Levels</span>
+                                    <span class="multiselect-arrow">▼</span>
+                                </div>
+                                <div class="multiselect-options">
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="BREAKING" data-label="Breaking Changes">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Breaking Changes</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="LOW" data-label="Low Impact">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Low Impact</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="NONE" data-label="No Impact">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">No Impact</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="search-group">
                         <input type="text" id="searchInput" placeholder="Search classes, methods, fields...">
                         <i class="fas fa-search"></i>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="button" id="clearFiltersBtn" class="clear-filters-btn">
+                            <i class="fas fa-times"></i> Clear All
+                        </button>
                     </div>
                 </div>
 

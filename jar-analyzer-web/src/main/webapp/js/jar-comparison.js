@@ -98,17 +98,17 @@ class JarComparison {
             this.exportResults('html');
         });
         
-        // Filter controls
-        document.getElementById('changeTypeFilter').addEventListener('change', () => {
-            this.applyFilters();
-        });
+        // Initialize multiselect dropdowns
+        this.initializeMultiselect();
         
-        document.getElementById('impactFilter').addEventListener('change', () => {
-            this.applyFilters();
-        });
-        
+        // Search filter
         document.getElementById('searchInput').addEventListener('input', () => {
             this.applyFilters();
+        });
+        
+        // Clear filters button
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            this.clearAllFilters();
         });
         
         // Change item expansion
@@ -118,6 +118,140 @@ class JarComparison {
                 changeItem.classList.toggle('expanded');
             }
         });
+    }
+    
+    /**
+     * Initialize multiselect dropdowns
+     */
+    initializeMultiselect() {
+        const multiselectElements = ['changeTypeMultiselect', 'impactMultiselect'];
+        
+        multiselectElements.forEach(elementId => {
+            const dropdown = document.getElementById(elementId);
+            const button = dropdown.querySelector('.multiselect-button');
+            const options = dropdown.querySelector('.multiselect-options');
+            const checkboxes = options.querySelectorAll('input[type="checkbox"]');
+            
+            // Toggle dropdown on button click
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleMultiselect(dropdown);
+            });
+            
+            // Handle keyboard navigation
+            button.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.toggleMultiselect(dropdown);
+                }
+            });
+            
+            // Handle checkbox changes
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    this.updateMultiselectText(dropdown);
+                    this.applyFilters();
+                });
+            });
+            
+            // Prevent dropdown from closing when clicking inside options
+            options.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            this.closeAllMultiselects();
+        });
+    }
+    
+    /**
+     * Toggle multiselect dropdown open/close
+     */
+    toggleMultiselect(dropdown) {
+        const isOpen = dropdown.classList.contains('open');
+        
+        // Close all dropdowns first
+        this.closeAllMultiselects();
+        
+        // Toggle the clicked dropdown
+        if (!isOpen) {
+            dropdown.classList.add('open');
+            dropdown.querySelector('.multiselect-button').classList.add('active');
+        }
+    }
+    
+    /**
+     * Close all multiselect dropdowns
+     */
+    closeAllMultiselects() {
+        const dropdowns = document.querySelectorAll('.multiselect-dropdown');
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.remove('open');
+            dropdown.querySelector('.multiselect-button').classList.remove('active');
+        });
+    }
+    
+    /**
+     * Update multiselect button text based on selected options
+     */
+    updateMultiselectText(dropdown) {
+        const textElement = dropdown.querySelector('.multiselect-text');
+        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+        const selectedCount = checkboxes.length;
+        
+        if (selectedCount === 0) {
+            // Default placeholder text
+            if (dropdown.id === 'changeTypeMultiselect') {
+                textElement.textContent = 'Select Change Types';
+                textElement.classList.add('placeholder');
+            } else if (dropdown.id === 'impactMultiselect') {
+                textElement.textContent = 'Select Impact Levels';
+                textElement.classList.add('placeholder');
+            }
+        } else if (selectedCount === 1) {
+            // Show single selection
+            const selectedLabel = checkboxes[0].getAttribute('data-label');
+            textElement.textContent = selectedLabel;
+            textElement.classList.remove('placeholder');
+        } else {
+            // Show count for multiple selections
+            textElement.textContent = `${selectedCount} items selected`;
+            textElement.classList.remove('placeholder');
+        }
+    }
+    
+    /**
+     * Get selected values from multiselect dropdown
+     */
+    getMultiselectValues(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+    
+    /**
+     * Clear all filters
+     */
+    clearAllFilters() {
+        // Clear multiselect checkboxes
+        const checkboxes = document.querySelectorAll('.multiselect-dropdown input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Update multiselect texts
+        const dropdowns = document.querySelectorAll('.multiselect-dropdown');
+        dropdowns.forEach(dropdown => {
+            this.updateMultiselectText(dropdown);
+        });
+        
+        // Clear search input
+        document.getElementById('searchInput').value = '';
+        
+        // Reapply filters
+        this.applyFilters();
     }
     
     /**
@@ -532,16 +666,19 @@ class JarComparison {
     }
     
     /**
-     * Apply filters to change list
+     * Apply filters to change list using multiselect values
      */
     applyFilters() {
-        const typeFilter = document.getElementById('changeTypeFilter').value;
-        const impactFilter = document.getElementById('impactFilter').value;
+        // Get selected values from multiselect dropdowns
+        const selectedTypes = this.getMultiselectValues('changeTypeMultiselect');
+        const selectedImpacts = this.getMultiselectValues('impactMultiselect');
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         
         const changeItems = document.querySelectorAll('.change-item');
         console.log('Applying filters to', changeItems.length, 'items');
-        console.log('Filters: type=', typeFilter, 'impact=', impactFilter, 'search=', searchTerm);
+        console.log('Filters: types=', selectedTypes, 'impacts=', selectedImpacts, 'search=', searchTerm);
+        
+        let visibleCount = 0;
         
         changeItems.forEach(item => {
             const type = item.dataset.type;
@@ -550,13 +687,13 @@ class JarComparison {
             
             let visible = true;
             
-            // Apply type filter
-            if (typeFilter && typeFilter !== 'all' && typeFilter !== type) {
+            // Apply type filter - show if no types selected OR if item type is in selected types
+            if (selectedTypes.length > 0 && !selectedTypes.includes(type)) {
                 visible = false;
             }
             
-            // Apply impact filter  
-            if (impactFilter && impactFilter !== 'all' && impactFilter !== impact) {
+            // Apply impact filter - show if no impacts selected OR if item impact is in selected impacts
+            if (selectedImpacts.length > 0 && !selectedImpacts.includes(impact)) {
                 visible = false;
             }
             
@@ -566,11 +703,33 @@ class JarComparison {
             }
             
             item.style.display = visible ? 'block' : 'none';
+            if (visible) visibleCount++;
         });
         
-        // Count visible items
-        const visibleItems = document.querySelectorAll('.change-item[style="display: block;"], .change-item:not([style*="display: none"])');
-        console.log('Visible items after filtering:', visibleItems.length);
+        console.log('Visible items after filtering:', visibleCount);
+        this.updateFilterSummary(visibleCount, changeItems.length);
+    }
+    
+    /**
+     * Update filter summary display
+     */
+    updateFilterSummary(visibleCount, totalCount) {
+        let summaryElement = document.getElementById('filterSummary');
+        if (!summaryElement) {
+            // Create summary element if it doesn't exist
+            const filterControls = document.querySelector('.filter-controls');
+            summaryElement = document.createElement('div');
+            summaryElement.id = 'filterSummary';
+            summaryElement.className = 'filter-summary';
+            summaryElement.style.cssText = 'margin-top: 1rem; font-size: 0.9rem; color: #666; text-align: center;';
+            filterControls.appendChild(summaryElement);
+        }
+        
+        if (visibleCount === totalCount) {
+            summaryElement.textContent = `Showing all ${totalCount} changes`;
+        } else {
+            summaryElement.textContent = `Showing ${visibleCount} of ${totalCount} changes`;
+        }
     }
     
     /**
