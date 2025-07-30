@@ -149,6 +149,13 @@ class JarComparison {
             // Handle checkbox changes
             checkboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', () => {
+                    // Handle "All" checkbox logic
+                    if (checkbox.classList.contains('select-all-checkbox')) {
+                        this.handleSelectAll(dropdown, checkbox);
+                    } else {
+                        this.handleIndividualCheckbox(dropdown, checkbox);
+                    }
+                    
                     this.updateMultiselectText(dropdown);
                     this.applyFilters();
                 });
@@ -198,10 +205,17 @@ class JarComparison {
      */
     updateMultiselectText(dropdown) {
         const textElement = dropdown.querySelector('.multiselect-text');
-        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
-        const selectedCount = checkboxes.length;
+        const selectAllCheckbox = dropdown.querySelector('.select-all-checkbox');
+        const otherCheckboxes = dropdown.querySelectorAll('input[type="checkbox"]:not(.select-all-checkbox):checked');
+        const totalOtherCheckboxes = dropdown.querySelectorAll('input[type="checkbox"]:not(.select-all-checkbox)');
+        const selectedCount = otherCheckboxes.length;
+        const totalCount = totalOtherCheckboxes.length;
         
-        if (selectedCount === 0) {
+        if (selectAllCheckbox && selectAllCheckbox.checked && selectedCount === totalCount) {
+            // "All" is selected and all individual options are selected
+            textElement.textContent = 'All';
+            textElement.classList.remove('placeholder');
+        } else if (selectedCount === 0) {
             // Default placeholder text
             if (dropdown.id === 'changeTypeMultiselect') {
                 textElement.textContent = 'Select Change Types';
@@ -212,7 +226,7 @@ class JarComparison {
             }
         } else if (selectedCount === 1) {
             // Show single selection
-            const selectedLabel = checkboxes[0].getAttribute('data-label');
+            const selectedLabel = otherCheckboxes[0].getAttribute('data-label');
             textElement.textContent = selectedLabel;
             textElement.classList.remove('placeholder');
         } else {
@@ -227,8 +241,47 @@ class JarComparison {
      */
     getMultiselectValues(dropdownId) {
         const dropdown = document.getElementById(dropdownId);
-        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked:not(.select-all-checkbox)');
         return Array.from(checkboxes).map(cb => cb.value);
+    }
+    
+    /**
+     * Handle "All" checkbox selection
+     */
+    handleSelectAll(dropdown, selectAllCheckbox) {
+        const otherCheckboxes = dropdown.querySelectorAll('input[type="checkbox"]:not(.select-all-checkbox)');
+        const isChecked = selectAllCheckbox.checked;
+        
+        // Set all other checkboxes to match the "All" checkbox state
+        otherCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+    }
+    
+    /**
+     * Handle individual checkbox selection and update "All" checkbox accordingly
+     */
+    handleIndividualCheckbox(dropdown, changedCheckbox) {
+        const selectAllCheckbox = dropdown.querySelector('.select-all-checkbox');
+        const otherCheckboxes = dropdown.querySelectorAll('input[type="checkbox"]:not(.select-all-checkbox)');
+        
+        // Check if all individual checkboxes are selected
+        const allSelected = Array.from(otherCheckboxes).every(checkbox => checkbox.checked);
+        const noneSelected = Array.from(otherCheckboxes).every(checkbox => !checkbox.checked);
+        
+        if (allSelected) {
+            // All individual options are selected, check the "All" checkbox
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else if (noneSelected) {
+            // No individual options are selected, uncheck the "All" checkbox
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            // Some but not all options are selected, set "All" to indeterminate
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
     }
     
     /**
@@ -239,6 +292,7 @@ class JarComparison {
         const checkboxes = document.querySelectorAll('.multiselect-dropdown input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             checkbox.checked = false;
+            checkbox.indeterminate = false;
         });
         
         // Update multiselect texts

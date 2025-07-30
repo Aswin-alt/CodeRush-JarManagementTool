@@ -383,22 +383,31 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .stat-card.breaking {
     border-left-color: #dc3545;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .stat-card.total {
     border-left-color: #17a2b8;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .stat-card.classes {
     border-left-color: #28a745;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .stat-card.duration {
     border-left-color: #ffc107;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .stat-icon {
@@ -409,39 +418,74 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .stat-card.breaking .stat-icon {
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+    background: rgba(220, 53, 69, 0.2);
+    color: #5a0a0a;
+    border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
 .stat-card.total .stat-icon {
-    background: rgba(23, 162, 184, 0.1);
-    color: #17a2b8;
+    background: rgba(23, 162, 184, 0.2);
+    color: #003d47;
+    border: 1px solid rgba(23, 162, 184, 0.3);
 }
 
 .stat-card.classes .stat-icon {
-    background: rgba(40, 167, 69, 0.1);
-    color: #28a745;
+    background: rgba(40, 167, 69, 0.2);
+    color: #0d3613;
+    border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
 .stat-card.duration .stat-icon {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
+    background: rgba(255, 193, 7, 0.2);
+    color: #5c4103;
+    border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 .stat-number {
     font-size: 2rem;
-    font-weight: 700;
-    color: #333;
+    font-weight: 900;
+    color: #000000 !important;
     line-height: 1;
+    opacity: 1 !important;
+    text-shadow: none !important;
 }
 
 .stat-label {
-    color: #666;
+    color: #1a1a1a;
     font-size: 0.9rem;
     margin-top: 0.25rem;
+    font-weight: 700;
+    opacity: 1;
+}
+
+/* Enhanced contrast for specific stat types */
+.stat-card.breaking .stat-number {
+    color: #000000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+}
+
+.stat-card.total .stat-number {
+    color: #000000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+}
+
+.stat-card.classes .stat-number {
+    color: #000000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+}
+
+.stat-card.duration .stat-number {
+    color: #000000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
 }
 
 /* Filter Controls */
@@ -594,6 +638,23 @@
     border-bottom: none;
 }
 
+/* All option styling */
+.multiselect-option.multiselect-all label {
+    background: #f8f9fa;
+    font-weight: 500;
+}
+
+.multiselect-option.multiselect-all label:hover {
+    background: #e9ecef;
+}
+
+/* Separator styling */
+.multiselect-separator {
+    height: 1px;
+    background: #dee2e6;
+    margin: 0.25rem 0;
+}
+
 .multiselect-option label {
     display: flex;
     align-items: center;
@@ -628,6 +689,11 @@
     border-color: #007bff;
 }
 
+.multiselect-option input[type="checkbox"]:indeterminate + .checkbox-custom {
+    background: #007bff;
+    border-color: #007bff;
+}
+
 .multiselect-option input[type="checkbox"]:checked + .checkbox-custom::after {
     content: '✓';
     position: absolute;
@@ -635,6 +701,16 @@
     left: 2px;
     color: white;
     font-size: 12px;
+    font-weight: bold;
+}
+
+.multiselect-option input[type="checkbox"]:indeterminate + .checkbox-custom::after {
+    content: '−';
+    position: absolute;
+    top: -4px;
+    left: 2px;
+    color: white;
+    font-size: 14px;
     font-weight: bold;
 }
 

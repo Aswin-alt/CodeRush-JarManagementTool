@@ -87,8 +87,37 @@ public class AnalysisServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
+        
+        // Ensure the upload directory exists
+        createUploadDirectoryIfNeeded();
+        
         logger.info("AnalysisServlet initialized - Ready to handle JAR analysis requests");
         logger.info("Max file upload size: 100MB, Max request size: 500MB");
+    }
+    
+    /**
+     * Creates the upload directory if it doesn't exist.
+     * This ensures file uploads work even after build/clean operations.
+     */
+    private void createUploadDirectoryIfNeeded() {
+        try {
+            // Get the upload location from the multipart config
+            String uploadPath = getServletContext().getRealPath("") + "/../../work/Tomcat/localhost/jar-analyzer";
+            java.io.File uploadDir = new java.io.File(uploadPath);
+            
+            if (!uploadDir.exists()) {
+                boolean created = uploadDir.mkdirs();
+                if (created) {
+                    logger.info("Created upload directory: {}", uploadPath);
+                } else {
+                    logger.warn("Failed to create upload directory: {}", uploadPath);
+                }
+            } else {
+                logger.info("Upload directory already exists: {}", uploadPath);
+            }
+        } catch (Exception e) {
+            logger.error("Error creating upload directory", e);
+        }
     }
     
     @Override
