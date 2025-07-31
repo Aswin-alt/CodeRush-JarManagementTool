@@ -26,7 +26,7 @@ body {
 
 /* Header Styles */
 .header {
-    padding: 2rem 0;
+    padding: 2rem 3rem;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 15px;
@@ -43,21 +43,31 @@ body {
 .logo {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .logo i {
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: #fff;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 15px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    padding: 12px;
     border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.logo i:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
 }
 
 .logo h1 {
     color: #fff;
-    font-size: 2rem;
-    font-weight: 600;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.5px;
 }
 
 .version {
@@ -328,7 +338,16 @@ body {
     }
     
     .logo h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+    }
+    
+    .logo i {
+        font-size: 1.6rem;
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 1.5rem 2rem;
     }
     
     .welcome-section h2 {
@@ -372,5 +391,18 @@ body {
     
     .card-content h3 {
         font-size: 1.25rem;
+    }
+    
+    .header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .logo h1 {
+        font-size: 1.2rem;
+    }
+    
+    .logo i {
+        font-size: 1.4rem;
+        padding: 8px;
     }
 }
