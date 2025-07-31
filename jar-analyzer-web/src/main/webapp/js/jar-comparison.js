@@ -655,6 +655,10 @@ class JarComparison {
      * Render a single change item
      */
     renderChangeItem(change) {
+        console.log('Rendering change:', change);
+        console.log('Change description:', JSON.stringify(change.description));
+        console.log('Change reasons:', change.reasons);
+        
         const typeClass = change.type.toLowerCase();
         const impactClass = change.compatibilityImpact.toLowerCase();
         
@@ -694,7 +698,7 @@ class JarComparison {
                     <i class="fas fa-chevron-right expand-icon"></i>
                 </div>
                 <div class="change-details">
-                    <div class="change-description">${change.description || 'No description available'}</div>
+                    <div class="change-description">${(change.description || 'No description available').trim()}</div>
                     ${this.renderChangeDiff(change)}
                     ${this.renderTechnicalDetails(change)}
                 </div>
@@ -713,16 +717,20 @@ class JarComparison {
         const diffLines = change.reasons.map(detail => {
             let lineClass = 'context';
             let prefix = ' ';
+            let content = detail; // Default to full detail
             
             if (detail.startsWith('- ')) {
                 lineClass = 'removed';
                 prefix = '-';
+                content = detail.substring(2); // Remove "- " prefix
             } else if (detail.startsWith('+ ')) {
                 lineClass = 'added';
                 prefix = '+';
+                content = detail.substring(2); // Remove "+ " prefix
             }
+            // If detail doesn't start with "- " or "+ ", use the full detail
             
-            return `<div class="diff-line ${lineClass}">${prefix} ${detail.substring(2) || detail}</div>`;
+            return `<div class="diff-line ${lineClass}">${prefix} ${content}</div>`;
         }).join('');
         
         return `
