@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAR Comparison - JAR Management Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/jar-comparison.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-code-compare"></i>
+                    <h1>JAR Comparison</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="goHome()">
+                        <i class="fas fa-home"></i> Home
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-header">
+                    <h2>Compare JAR Files</h2>
+                    <p>Upload two JAR files to analyze changes at class and method level</p>
+                </div>
+
+                <div class="upload-container">
+                    <!-- Old JAR Upload -->
+                    <div class="upload-box">
+                        <div class="upload-area" data-jar-type="old">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h3>Old JAR File</h3>
+                            <p>Drag & drop or click to select</p>
+                            <input type="file" id="oldJarInput" accept=".jar" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- VS Indicator -->
+                    <div class="vs-indicator">
+                        <span>VS</span>
+                    </div>
+
+                    <!-- New JAR Upload -->
+                    <div class="upload-box">
+                        <div class="upload-area" data-jar-type="new">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h3>New JAR File</h3>
+                            <p>Drag & drop or click to select</p>
+                            <input type="file" id="newJarInput" accept=".jar" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Options -->
+                <div class="analysis-options">
+                    <h3>Analysis Options</h3>
+                    <div class="options-grid">
+                        <label class="option-item">
+                            <input type="checkbox" value="includePrivateMembers" checked>
+                            <span class="checkmark"></span>
+                            <div class="option-content">
+                                <strong>Include Private Members</strong>
+                                <p>Analyze private methods and fields</p>
+                            </div>
+                        </label>
+
+                        <label class="option-item">
+                            <input type="checkbox" value="includePackageClasses" checked>
+                            <span class="checkmark"></span>
+                            <div class="option-content">
+                                <strong>Include Package Classes</strong>
+                                <p>Analyze package-private classes</p>
+                            </div>
+                        </label>
+
+                        <label class="option-item">
+                            <input type="checkbox" value="analyzeFieldChanges" checked>
+                            <span class="checkmark"></span>
+                            <div class="option-content">
+                                <strong>Analyze Field Changes</strong>
+                                <p>Compare field types and modifiers</p>
+                            </div>
+                        </label>
+
+                        <label class="option-item">
+                            <input type="checkbox" value="analyzeAnnotations" checked>
+                            <span class="checkmark"></span>
+                            <div class="option-content">
+                                <strong>Analyze Annotations</strong>
+                                <p>Compare annotation changes</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Compare Button -->
+                <div class="compare-section">
+                    <button class="btn-primary" id="compareBtn" disabled>
+                        <i class="fas fa-upload"></i>
+                        Select both JAR files first
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <h3>Analyzing JAR Files</h3>
+                        <p id="progressMessage">Initializing analysis...</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-details">
+                        <span id="progressPercent">0%</span>
+                        <span id="progressTime">Estimated time: calculating...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <!-- Results Header -->
+                <div class="results-header">
+                    <div class="results-title">
+                        <h2>Comparison Results</h2>
+                        <div class="jar-names">
+                            <span class="old-jar" id="oldJarName">old.jar</span>
+                            <i class="fas fa-arrow-right"></i>
+                            <span class="new-jar" id="newJarName">new.jar</span>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button class="btn-secondary" id="exportJsonBtn">
+                            <i class="fas fa-download"></i> Export JSON
+                        </button>
+                        <button class="btn-secondary" id="exportHtmlBtn">
+                            <i class="fas fa-download"></i> Export HTML
+                        </button>
+                        <button class="btn-secondary" id="newComparisonBtn" onclick="if(jarComparison) jarComparison.resetComparison(); return false;">
+                            <i class="fas fa-plus"></i> New Comparison
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="summary-stats">
+                    <div class="stat-card breaking">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="breakingCount">0</div>
+                            <div class="stat-label">Breaking Changes</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card total">
+                        <div class="stat-icon">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalCount">0</div>
+                            <div class="stat-label">Total Changes</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card classes">
+                        <div class="stat-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="classesCount">0</div>
+                            <div class="stat-label">Classes Affected</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card duration">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="durationValue">0ms</div>
+                            <div class="stat-label">Analysis Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label>Filter by Change Type:</label>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-dropdown" id="changeTypeMultiselect">
+                                <div class="multiselect-button" tabindex="0">
+                                    <span class="multiselect-text">Select Change Types</span>
+                                    <span class="multiselect-arrow">▼</span>
+                                </div>
+                                <div class="multiselect-options">
+                                    <div class="multiselect-option multiselect-all">
+                                        <label>
+                                            <input type="checkbox" value="ALL" data-label="All" class="select-all-checkbox">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text"><strong>All</strong></span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-separator"></div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="CLASS_ADDED" data-label="Classes Added">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Classes Added</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="CLASS_REMOVED" data-label="Classes Removed">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Classes Removed</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="METHOD_ADDED" data-label="Methods Added">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Methods Added</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="METHOD_REMOVED" data-label="Methods Removed">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Methods Removed</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="FIELD_ADDED" data-label="Fields Added">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Fields Added</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="FIELD_REMOVED" data-label="Fields Removed">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Fields Removed</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Filter by Impact:</label>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-dropdown" id="impactMultiselect">
+                                <div class="multiselect-button" tabindex="0">
+                                    <span class="multiselect-text">Select Impact Levels</span>
+                                    <span class="multiselect-arrow">▼</span>
+                                </div>
+                                <div class="multiselect-options">
+                                    <div class="multiselect-option multiselect-all">
+                                        <label>
+                                            <input type="checkbox" value="ALL" data-label="All" class="select-all-checkbox">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text"><strong>All</strong></span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-separator"></div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="BREAKING" data-label="Breaking Changes">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Breaking Changes</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="LOW" data-label="Low Impact">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">Low Impact</span>
+                                        </label>
+                                    </div>
+                                    <div class="multiselect-option">
+                                        <label>
+                                            <input type="checkbox" value="NONE" data-label="No Impact">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="option-text">No Impact</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="search-group">
+                        <input type="text" id="searchInput" placeholder="Search classes, methods, fields...">
+                        <i class="fas fa-search"></i>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="button" id="clearFiltersBtn" class="clear-filters-btn">
+                            <i class="fas fa-times"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Changes List (Git-like diff view) -->
+                <div class="changes-container">
+                    <div class="changes-list" id="changesContainer">
+                        <!-- Changes will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/jar-comparison.js"></script>
+</body>
+</html>

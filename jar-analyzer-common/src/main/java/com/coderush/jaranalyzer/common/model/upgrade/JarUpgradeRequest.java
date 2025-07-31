@@ -4,6 +4,7 @@ import com.coderush.jaranalyzer.common.model.AnalysisRequest;
 import com.coderush.jaranalyzer.common.model.AnalysisType;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -52,7 +53,7 @@ public class JarUpgradeRequest extends AnalysisRequest {
      * Convenience constructor with default metadata.
      */
     public JarUpgradeRequest(File projectZipFile, File oldJarFile, File newJarFile) {
-        this(projectZipFile, oldJarFile, newJarFile, Map.of());
+        this(projectZipFile, oldJarFile, newJarFile, new HashMap<>());
     }
     
     private boolean getBooleanMetadata(String key, boolean defaultValue) {

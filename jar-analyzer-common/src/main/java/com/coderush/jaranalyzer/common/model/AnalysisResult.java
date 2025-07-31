@@ -1,6 +1,8 @@
 package com.coderush.jaranalyzer.common.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,8 +45,8 @@ public abstract class AnalysisResult {
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = warnings.isEmpty() ? AnalysisStatus.SUCCESS : AnalysisStatus.PARTIAL;
-        this.metadata = metadata != null ? Map.copyOf(metadata) : Map.of();
-        this.warnings = warnings != null ? List.copyOf(warnings) : List.of();
+        this.metadata = metadata != null ? new HashMap<>(metadata) : new HashMap<>();
+        this.warnings = warnings != null ? new ArrayList<>(warnings) : new ArrayList<>();
         this.errorMessage = null;
     }
     
@@ -59,8 +61,8 @@ public abstract class AnalysisResult {
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = AnalysisStatus.FAILED;
-        this.metadata = Map.of();
-        this.warnings = List.of();
+        this.metadata = new HashMap<>();
+        this.warnings = new ArrayList<>();
         this.errorMessage = errorMessage;
     }
     

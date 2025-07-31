@@ -7,7 +7,7 @@
 plugins {
     id 'java'
     id 'war'
-    id 'org.gretty' version '4.0.3'
+    id 'org.gretty' version '3.1.0'
 }
 
 repositories {
@@ -28,14 +28,20 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
 gretty {
     httpPort = 8080
     contextPath = '/jar-analyzer'
-    servletContainer = 'jetty11'
+    servletContainer = 'tomcat9'
+    
+    // Disable hot reload to avoid scanning issues
+    managedClassReload = false
+    
+    // Override web.xml configuration to be explicit about servlet mapping
+    webXml = file('src/main/webapp/WEB-INF/web.xml')
 }
 
 tasks.named('test') {

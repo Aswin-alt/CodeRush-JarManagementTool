@@ -1,18 +1,23 @@
 package com.coderush.jaranalyzer.core.analyzer;
 
-import com.coderush.jaranalyzer.common.analyzer.ProjectAnalyzer;
-import com.coderush.jaranalyzer.common.analyzer.AnalyzerMetadata;
-import com.coderush.jaranalyzer.common.model.AnalysisType;
-import com.coderush.jaranalyzer.common.model.upgrade.JarUpgradeRequest;
-import com.coderush.jaranalyzer.common.model.upgrade.JarUpgradeResult;
-import com.coderush.jaranalyzer.common.exception.AnalysisException;
-import com.coderush.jaranalyzer.core.service.analyzer.JDepsAnalyzerService;
-import com.coderush.jaranalyzer.core.service.analyzer.AsmAnalyzerService;
-import com.coderush.jaranalyzer.core.service.analyzer.JdeprscanAnalyzerService;
-import com.coderush.jaranalyzer.core.service.analyzer.OsvScannerService;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.coderush.jaranalyzer.common.analyzer.AnalyzerMetadata;
+import com.coderush.jaranalyzer.common.analyzer.ProjectAnalyzer;
+import com.coderush.jaranalyzer.common.exception.AnalysisException;
+import com.coderush.jaranalyzer.common.model.AnalysisType;
+import com.coderush.jaranalyzer.common.model.upgrade.JarUpgradeRequest;
+import com.coderush.jaranalyzer.common.model.upgrade.JarUpgradeResult;
+import com.coderush.jaranalyzer.core.service.analyzer.AsmAnalyzerService;
+import com.coderush.jaranalyzer.core.service.analyzer.JDepsAnalyzerService;
+import com.coderush.jaranalyzer.core.service.analyzer.JdeprscanAnalyzerService;
+import com.coderush.jaranalyzer.core.service.analyzer.OsvScannerService;
 
 /**
  * Concrete implementation of JAR upgrade impact analysis.
@@ -69,24 +74,24 @@ public class JarUpgradeAnalyzer implements ProjectAnalyzer<JarUpgradeRequest, Ja
             // Step 2: Analyze dependency changes using JDeps
             logger.debug("Analyzing dependency changes...");
             var dependencyAnalysis = jdepsService.analyzeProjectDependencies(
-                java.util.List.of(request.getOldJarFile().toPath(), request.getNewJarFile().toPath()),
-                java.util.List.of(), // Empty classpath for now
-                java.util.Map.of()   // Default options
+                Arrays.asList(request.getOldJarFile().toPath(), request.getNewJarFile().toPath()),
+                new ArrayList<>(), // Empty classpath for now
+                new HashMap<>()   // Default options
             );
             
             // Step 3: Analyze API usage patterns using ASM  
             logger.debug("Analyzing API usage patterns...");
             var apiUsageAnalysis = asmService.analyzeApiUsage(
                 request.getNewJarFile().toPath(),
-                java.util.List.of(), // No specific target APIs for now
-                java.util.Map.of()   // Default options
+                new ArrayList<>(), // No specific target APIs for now
+                new HashMap<>()   // Default options
             );
             
             // Step 4: Check for deprecated API usage using Jdeprscan
             logger.debug("Scanning for deprecated APIs...");
             var deprecatedApiAnalysis = jdeprscanService.scanForDeprecatedApis(
                 request.getNewJarFile().toPath(),
-                java.util.Map.of()   // Default options
+                new HashMap<>()   // Default options
             );
             
             // Step 5: Scan for new vulnerabilities using OSV-Scanner
@@ -94,18 +99,20 @@ public class JarUpgradeAnalyzer implements ProjectAnalyzer<JarUpgradeRequest, Ja
             var vulnerabilityAnalysis = osvService.compareVulnerabilityProfiles(
                 request.getOldJarFile().toPath(),
                 request.getNewJarFile().toPath(),
-                java.util.Map.of()   // Default options
+                new HashMap<>()   // Default options
             );
             
             // Step 6: Combine all analysis results
             logger.info("Combining analysis results...");
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("combinedAnalysis", true);
             JarUpgradeResult result = new JarUpgradeResult(
                 request.getRequestId(),
                 request.getAnalysisType(),
                 java.time.LocalDateTime.now().minusMinutes(1), // start time
                 java.time.LocalDateTime.now(),                 // end time
-                java.util.Map.of("combinedAnalysis", true),    // metadata
-                java.util.List.of()                            // warnings
+                metadata,                                      // metadata
+                new ArrayList<>()                              // warnings
             );
             
             // Add individual analysis results

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
+
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+    
+    <!-- Disable annotation configuration to avoid Java 21 bytecode scanning issues -->
+    <Call name="setAttribute">
+        <Arg>org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern</Arg>
+        <Arg>.*/[^/]*servlet-api-[^/]*\.jar$|.*/javax.servlet.jsp.jstl-.*\.jar$|.*/[^/]*taglibs.*\.jar$</Arg>
+    </Call>
+    
+    <!-- Configure web application contexts -->
+    <Get name="handler">
+        <Set name="configurationClasses">
+            <Array type="java.lang.String">
+                <Item>org.eclipse.jetty.webapp.WebInfConfiguration</Item>
+                <Item>org.eclipse.jetty.webapp.WebXmlConfiguration</Item>
+                <Item>org.eclipse.jetty.webapp.MetaInfConfiguration</Item>
+                <Item>org.eclipse.jetty.webapp.FragmentConfiguration</Item>
+                <!-- Explicitly EXCLUDE AnnotationConfiguration -->
+                <!-- <Item>org.eclipse.jetty.annotations.AnnotationConfiguration</Item> -->
+                <Item>org.eclipse.jetty.webapp.JettyWebXmlConfiguration</Item>
+            </Array>
+        </Set>
+    </Get>
+    
+</Configure>
