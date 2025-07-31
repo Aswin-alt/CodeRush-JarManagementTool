@@ -80,42 +80,77 @@ class JarComparison {
      */
     setupEventListeners() {
         // Compare button
-        document.getElementById('compareBtn').addEventListener('click', () => {
-            this.startComparison();
-        });
+        const compareBtn = document.getElementById('compareBtn');
+        if (compareBtn) {
+            compareBtn.addEventListener('click', () => {
+                this.startComparison();
+            });
+        }
         
         // New comparison button
-        document.getElementById('newComparisonBtn').addEventListener('click', () => {
-            this.resetComparison();
-        });
+        const newComparisonBtn = document.getElementById('newComparisonBtn');
+        if (newComparisonBtn) {
+            newComparisonBtn.addEventListener('click', () => {
+                console.log('New Comparison button clicked!');
+                this.resetComparison();
+            });
+            console.log('New Comparison button event listener added successfully');
+        } else {
+            console.error('New Comparison button not found! ID: newComparisonBtn');
+        }
         
         // Export buttons
-        document.getElementById('exportJsonBtn').addEventListener('click', () => {
-            this.exportResults('json');
-        });
+        const exportJsonBtn = document.getElementById('exportJsonBtn');
+        if (exportJsonBtn) {
+            exportJsonBtn.addEventListener('click', () => {
+                this.exportResults('json');
+            });
+        }
         
-        document.getElementById('exportHtmlBtn').addEventListener('click', () => {
-            this.exportResults('html');
-        });
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        if (exportHtmlBtn) {
+            exportHtmlBtn.addEventListener('click', () => {
+                this.exportResults('html');
+            });
+        }
         
-        // Initialize multiselect dropdowns
-        this.initializeMultiselect();
+        // Initialize multiselect dropdowns (if they exist)
+        try {
+            this.initializeMultiselect();
+        } catch (error) {
+            console.warn('Could not initialize multiselect dropdowns:', error);
+        }
         
-        // Search filter
-        document.getElementById('searchInput').addEventListener('input', () => {
-            this.applyFilters();
-        });
+        // Search filter (if it exists)
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                this.applyFilters();
+            });
+        }
         
-        // Clear filters button
-        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-            this.clearAllFilters();
-        });
+        // Clear filters button (if it exists)
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => {
+                this.clearAllFilters();
+            });
+        }
         
-        // Change item expansion
+        // Change item expansion AND New Comparison button delegation
         document.addEventListener('click', (e) => {
+            // Handle change item expansion
             if (e.target.closest('.change-header')) {
                 const changeItem = e.target.closest('.change-item');
                 changeItem.classList.toggle('expanded');
+            }
+            
+            // Handle New Comparison button with event delegation
+            if (e.target.closest('#newComparisonBtn')) {
+                console.log('New Comparison button clicked via event delegation!');
+                e.preventDefault();
+                e.stopPropagation();
+                this.resetComparison();
             }
         });
     }
@@ -128,8 +163,18 @@ class JarComparison {
         
         multiselectElements.forEach(elementId => {
             const dropdown = document.getElementById(elementId);
+            if (!dropdown) {
+                console.warn(`Multiselect element ${elementId} not found`);
+                return;
+            }
+            
             const button = dropdown.querySelector('.multiselect-button');
             const options = dropdown.querySelector('.multiselect-options');
+            if (!button || !options) {
+                console.warn(`Multiselect components not found for ${elementId}`);
+                return;
+            }
+            
             const checkboxes = options.querySelectorAll('input[type="checkbox"]');
             
             // Toggle dropdown on button click
@@ -302,10 +347,16 @@ class JarComparison {
         });
         
         // Clear search input
-        document.getElementById('searchInput').value = '';
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
         
-        // Reapply filters
-        this.applyFilters();
+        // Reapply filters (only if we're in results section)
+        if (document.getElementById('resultsSection') && 
+            document.getElementById('resultsSection').style.display !== 'none') {
+            this.applyFilters();
+        }
     }
     
     /**
@@ -906,38 +957,50 @@ class JarComparison {
      * Reset comparison for new analysis
      */
     resetComparison() {
+        console.log('resetComparison() called - resetting to upload section');
         this.stopProgressMonitoring();
         this.analysisId = null;
         this.files = { old: null, new: null };
         this.currentResults = null;
         
         // Reset file inputs
-        document.getElementById('oldJarInput').value = '';
-        document.getElementById('newJarInput').value = '';
+        const oldJarInput = document.getElementById('oldJarInput');
+        const newJarInput = document.getElementById('newJarInput');
+        if (oldJarInput) oldJarInput.value = '';
+        if (newJarInput) newJarInput.value = '';
         
         // Reset upload areas
         this.removeFile('old');
         this.removeFile('new');
         
-        // Reset filters
-        document.getElementById('changeTypeFilter').value = '';
-        document.getElementById('impactFilter').value = '';
-        document.getElementById('searchInput').value = '';
+        // Reset filters (if they exist)
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = '';
+        
+        // Clear all multiselect filters
+        this.clearAllFilters();
         
         this.showSection('upload');
+        console.log('resetComparison() completed - should now show upload section');
     }
     
     /**
      * Show specific section and hide others
      */
     showSection(sectionName) {
+        console.log(`showSection('${sectionName}') called`);
         const sections = ['upload', 'progress', 'results'];
         sections.forEach(section => {
             const element = document.getElementById(`${section}Section`);
             if (element) {
-                element.style.display = section === sectionName ? 'block' : 'none';
+                const isVisible = section === sectionName;
+                element.style.display = isVisible ? 'block' : 'none';
+                console.log(`Section ${section}: ${isVisible ? 'visible' : 'hidden'}`);
+            } else {
+                console.warn(`Element ${section}Section not found!`);
             }
         });
+        console.log(`showSection('${sectionName}') completed`);
     }
     
     /**
@@ -1077,6 +1140,27 @@ document.head.appendChild(notificationStyles);
 let jarComparison;
 document.addEventListener('DOMContentLoaded', () => {
     jarComparison = new JarComparison();
+    
+    // Test button existence after DOM is loaded
+    console.log('DOM loaded, testing button existence:');
+    const testBtn = document.getElementById('newComparisonBtn');
+    console.log('newComparisonBtn found:', !!testBtn);
+    
+    // Add a manual test function to window for debugging
+    window.testNewComparisonButton = function() {
+        const btn = document.getElementById('newComparisonBtn');
+        console.log('Manual test - button found:', !!btn);
+        if (btn) {
+            console.log('Button visible:', btn.offsetParent !== null);
+            console.log('Button onclick:', btn.onclick);
+            console.log('Button addEventListener count:', btn.eventListeners?.length || 'unknown');
+            // Try to trigger the reset directly
+            if (jarComparison) {
+                console.log('Calling resetComparison directly...');
+                jarComparison.resetComparison();
+            }
+        }
+    };
 });
 
 // Global function for home button
