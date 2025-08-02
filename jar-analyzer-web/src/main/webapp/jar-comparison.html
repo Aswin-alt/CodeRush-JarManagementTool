@@ -201,7 +201,24 @@
                     </div>
                 </div>
 
-                <!-- Filter Controls -->
+                <!-- View Tabs -->
+                <div class="view-tabs">
+                    <button class="tab-button active" data-view="summary">
+                        <i class="fas fa-chart-bar"></i>
+                        Summary View
+                    </button>
+                    <button class="tab-button" data-view="diff">
+                        <i class="fas fa-code-compare"></i>
+                        Side-by-Side Diff
+                    </button>
+                    <button class="tab-button" data-view="tree" disabled title="Coming Soon">
+                        <i class="fas fa-sitemap"></i>
+                        Tree View
+                        <span class="coming-soon">Soon</span>
+                    </button>
+                </div>
+
+                <!-- Filter Controls (shared across views) -->
                 <div class="filter-controls">
                     <div class="filter-group">
                         <label>Filter by Change Type:</label>
@@ -322,10 +339,68 @@
                     </div>
                 </div>
 
-                <!-- Changes List (Git-like diff view) -->
-                <div class="changes-container">
-                    <div class="changes-list" id="changesContainer">
-                        <!-- Changes will be populated here -->
+                <!-- View Content Containers -->
+                <div class="view-content">
+                    <!-- Summary View -->
+                    <div class="view-panel active" id="summaryView">
+                        <div class="changes-container">
+                            <div class="changes-list" id="summaryContainer">
+                                <!-- Summary changes will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diff View -->
+                    <div class="view-panel" id="diffView">
+                        <div class="diff-container">
+                            <div class="diff-navigation">
+                                <div class="diff-nav-controls">
+                                    <button class="btn-nav" id="prevDiffBtn" disabled>
+                                        <i class="fas fa-chevron-up"></i> Previous
+                                    </button>
+                                    <span class="diff-counter">
+                                        <span id="currentDiffIndex">0</span> / <span id="totalDiffCount">0</span>
+                                    </span>
+                                    <button class="btn-nav" id="nextDiffBtn" disabled>
+                                        <i class="fas fa-chevron-down"></i> Next
+                                    </button>
+                                </div>
+                                <div class="diff-options">
+                                    <label class="toggle-option">
+                                        <input type="checkbox" id="showContextLines" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Show Context</span>
+                                    </label>
+                                    <label class="toggle-option">
+                                        <input type="checkbox" id="wordWrapDiff">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Word Wrap</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="diff-list" id="diffContainer">
+                                <!-- Side-by-side diffs will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tree View -->
+                    <div class="view-panel" id="treeView">
+                        <div class="tree-container">
+                            <div class="tree-placeholder">
+                                <i class="fas fa-sitemap tree-icon"></i>
+                                <h3>Tree View</h3>
+                                <p>This feature is coming soon. It will show changes in a hierarchical tree structure.</p>
+                                <div class="coming-soon-features">
+                                    <ul>
+                                        <li><i class="fas fa-check"></i> Package hierarchy visualization</li>
+                                        <li><i class="fas fa-check"></i> Expandable class and method trees</li>
+                                        <li><i class="fas fa-check"></i> Visual change indicators</li>
+                                        <li><i class="fas fa-check"></i> Quick navigation to specific changes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

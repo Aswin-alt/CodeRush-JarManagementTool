@@ -11,6 +11,10 @@ class JarComparison {
             old: null,
             new: null
         };
+        this.currentView = 'summary';
+        this.currentResults = null;
+        this.filteredChanges = [];
+        this.currentDiffIndex = 0;
         
         this.init();
     }
@@ -19,7 +23,87 @@ class JarComparison {
         this.setupDragAndDrop();
         this.setupFileInputs();
         this.setupEventListeners();
+        this.setupViewTabs();
         this.showSection('upload');
+    }
+    
+    /**
+     * Setup view tab functionality
+     */
+    setupViewTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.disabled) return;
+                
+                const view = button.dataset.view;
+                this.switchView(view);
+            });
+        });
+        
+        // Setup diff navigation
+        const prevBtn = document.getElementById('prevDiffBtn');
+        const nextBtn = document.getElementById('nextDiffBtn');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateDiff(-1));
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateDiff(1));
+        }
+        
+        // Setup diff options
+        const showContextCheckbox = document.getElementById('showContextLines');
+        const wordWrapCheckbox = document.getElementById('wordWrapDiff');
+        
+        if (showContextCheckbox) {
+            showContextCheckbox.addEventListener('change', () => this.refreshDiffView());
+        }
+        if (wordWrapCheckbox) {
+            wordWrapCheckbox.addEventListener('change', () => this.toggleWordWrap());
+        }
+    }
+    
+    /**
+     * Switch between different view modes
+     */
+    switchView(viewName) {
+        console.log('Switching to view:', viewName);
+        
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === viewName);
+        });
+        
+        // Update view panels
+        document.querySelectorAll('.view-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.id === `${viewName}View`);
+        });
+        
+        this.currentView = viewName;
+        
+        // Refresh the view content if we have results
+        if (this.currentResults) {
+            console.log('Refreshing view content for:', viewName);
+            this.refreshCurrentView();
+        }
+    }
+    
+    /**
+     * Refresh the current view content
+     */
+    refreshCurrentView() {
+        switch (this.currentView) {
+            case 'summary':
+                this.renderSummaryView();
+                break;
+            case 'diff':
+                this.renderDiffView();
+                break;
+            case 'tree':
+                // Tree view is not implemented yet
+                break;
+        }
     }
     
     /**
@@ -121,11 +205,12 @@ class JarComparison {
             console.warn('Could not initialize multiselect dropdowns:', error);
         }
         
-        // Search filter (if it exists)
+        // Search filter (if it exists) - placeholder for future filtering
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.addEventListener('input', () => {
-                this.applyFilters();
+                // TODO: Implement filtering for new view system
+                console.log('Search filter triggered:', searchInput.value);
             });
         }
         
@@ -202,7 +287,8 @@ class JarComparison {
                     }
                     
                     this.updateMultiselectText(dropdown);
-                    this.applyFilters();
+                    // TODO: Implement filtering for new view system
+                    console.log('Filter changed for', dropdown.id);
                 });
             });
             
@@ -352,10 +438,10 @@ class JarComparison {
             searchInput.value = '';
         }
         
-        // Reapply filters (only if we're in results section)
+        // TODO: Clear filters for new view system if needed
         if (document.getElementById('resultsSection') && 
             document.getElementById('resultsSection').style.display !== 'none') {
-            this.applyFilters();
+            console.log('Clear filters called in results section');
         }
     }
     
@@ -586,16 +672,22 @@ class JarComparison {
     }
     
     /**
-     * Display comparison results
+     * Display results in the current view mode
      */
     displayResults(results) {
         console.log('Displaying results:', results);
         console.log('Number of changes:', results.changes?.length || 0);
-        console.log('Results structure check:');
-        console.log('- Has changes array:', !!results.changes);
-        console.log('- Changes is array:', Array.isArray(results.changes));
-        if (results.changes && results.changes.length > 0) {
-            console.log('- First change:', results.changes[0]);
+        
+        // Store results
+        this.currentResults = results;
+        this.filteredChanges = results.changes || [];
+        
+        // Debug log the structure of changes
+        if (this.filteredChanges.length > 0) {
+            console.log('Sample change structure:', this.filteredChanges[0]);
+            console.log('Changes with oldSignature:', this.filteredChanges.filter(c => c.oldSignature).length);
+            console.log('Changes with newSignature:', this.filteredChanges.filter(c => c.newSignature).length);
+            console.log('Changes with both signatures:', this.filteredChanges.filter(c => c.oldSignature && c.newSignature).length);
         }
         
         // Update header with JAR names
@@ -605,11 +697,137 @@ class JarComparison {
         // Update summary statistics
         this.updateSummaryStats(results);
         
-        // Display changes
-        this.displayChanges(results.changes || []);
+        // Make sure we start with summary view and all tabs are enabled
+        this.enableAllTabs();
+        this.switchView('summary');
         
-        // Store results for export
-        this.currentResults = results;
+        // Refresh current view
+        this.refreshCurrentView();
+    }
+    
+    /**
+     * Enable all tab buttons
+     */
+    enableAllTabs() {
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.disabled = false;
+        });
+    }
+    
+    /**
+     * Render the summary view (legacy style)
+     */
+    renderSummaryView() {
+        const container = document.getElementById('summaryContainer');
+        const changes = this.filteredChanges;
+        
+        if (changes.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #666;">
+                    <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 1rem; color: #28a745;"></i>
+                    <h3>No Differences Found</h3>
+                    <p>The JAR files appear to be identical or have no detectable changes.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = changes.map(change => this.renderSummaryChangeItem(change)).join('');
+        // TODO: Apply filters for new view system if needed
+        console.log('Summary view rendered with', changes.length, 'changes');
+    }
+    
+    /**
+     * Render the side-by-side diff view
+     */
+    renderDiffView() {
+        const container = document.getElementById('diffContainer');
+        const changes = this.filteredChanges.filter(change => {
+            // Include changes that have meaningful signatures to compare
+            // This includes modifications (both signatures), additions (new signature), and removals (old signature)
+            return change.oldSignature || change.newSignature;
+        });
+        
+        console.log('Total filtered changes for diff view:', changes.length);
+        console.log('Sample changes:', changes.slice(0, 3));
+        
+        if (changes.length === 0) {
+            container.innerHTML = `
+                <div class="no-diffs-message">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>No Changes Available for Diff View</h3>
+                    <p>No changes found with signature data for side-by-side comparison.</p>
+                    <p>Try the Summary View to see all detected changes.</p>
+                </div>
+            `;
+            this.updateDiffNavigation(0, 0);
+            return;
+        }
+        
+        container.innerHTML = changes.map((change, index) => 
+            this.renderDiffItem(change, index)
+        ).join('');
+        
+        this.updateDiffNavigation(changes.length, 1);
+        this.currentDiffIndex = 0;
+    }
+    
+    /**
+     * Update diff navigation controls
+     */
+    updateDiffNavigation(total, current) {
+        const totalElement = document.getElementById('totalDiffCount');
+        const currentElement = document.getElementById('currentDiffIndex');
+        const prevBtn = document.getElementById('prevDiffBtn');
+        const nextBtn = document.getElementById('nextDiffBtn');
+        
+        if (totalElement) totalElement.textContent = total;
+        if (currentElement) currentElement.textContent = total > 0 ? current : 0;
+        
+        if (prevBtn) {
+            prevBtn.disabled = current <= 1;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = current >= total;
+        }
+    }
+    
+    /**
+     * Navigate between diffs
+     */
+    navigateDiff(direction) {
+        const diffItems = document.querySelectorAll('.diff-item');
+        if (diffItems.length === 0) return;
+        
+        this.currentDiffIndex = Math.max(0, Math.min(diffItems.length - 1, this.currentDiffIndex + direction));
+        
+        // Scroll to the diff item
+        diffItems[this.currentDiffIndex].scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+        
+        this.updateDiffNavigation(diffItems.length, this.currentDiffIndex + 1);
+    }
+    
+    /**
+     * Toggle word wrap in diff view
+     */
+    toggleWordWrap() {
+        const wordWrapEnabled = document.getElementById('wordWrapDiff').checked;
+        document.querySelectorAll('.diff-code').forEach(code => {
+            code.style.wordBreak = wordWrapEnabled ? 'break-word' : 'break-all';
+            code.style.whiteSpace = wordWrapEnabled ? 'pre-wrap' : 'pre';
+        });
+    }
+    
+    /**
+     * Refresh diff view (for context lines toggle)
+     */
+    refreshDiffView() {
+        if (this.currentView === 'diff') {
+            this.renderDiffView();
+        }
     }
     
     /**
@@ -629,36 +847,9 @@ class JarComparison {
     }
     
     /**
-     * Display changes in Git-like diff format
+     * Render a summary change item (original style)
      */
-    displayChanges(changes) {
-        console.log('Displaying changes:', changes.length, 'changes');
-        const container = document.getElementById('changesContainer');
-        
-        if (changes.length === 0) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: #666;">
-                    <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 1rem; color: #28a745;"></i>
-                    <h3>No Differences Found</h3>
-                    <p>The JAR files appear to be identical or have no detectable changes.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = changes.map(change => this.renderChangeItem(change)).join('');
-        console.log('Changes rendered, applying filters...');
-        this.applyFilters();
-    }
-    
-    /**
-     * Render a single change item
-     */
-    renderChangeItem(change) {
-        console.log('Rendering change:', change);
-        console.log('Change description:', JSON.stringify(change.description));
-        console.log('Change reasons:', change.reasons);
-        
+    renderSummaryChangeItem(change) {
         const typeClass = change.type.toLowerCase();
         const impactClass = change.compatibilityImpact.toLowerCase();
         
@@ -667,23 +858,15 @@ class JarComparison {
             case 'METHOD_ADDED':
             case 'FIELD_ADDED':
             case 'CLASS_ADDED':
-            case 'ADDED':
                 typeIcon = 'fas fa-plus';
                 break;
             case 'METHOD_REMOVED':
             case 'FIELD_REMOVED':
             case 'CLASS_REMOVED':
-            case 'REMOVED':
                 typeIcon = 'fas fa-minus';
                 break;
-            case 'METHOD_MODIFIED':
-            case 'FIELD_MODIFIED':
-            case 'CLASS_MODIFIED':
-            case 'MODIFIED':
-                typeIcon = 'fas fa-edit';
-                break;
             default:
-                typeIcon = 'fas fa-code';
+                typeIcon = 'fas fa-edit';
         }
         
         return `
@@ -699,17 +882,16 @@ class JarComparison {
                 </div>
                 <div class="change-details">
                     <div class="change-description">${(change.description || 'No description available').trim()}</div>
-                    ${this.renderChangeDiff(change)}
-                    ${this.renderTechnicalDetails(change)}
+                    ${this.renderSummaryDiff(change)}
                 </div>
             </div>
         `;
     }
     
     /**
-     * Render change diff in Git-like format
+     * Render diff for summary view
      */
-    renderChangeDiff(change) {
+    renderSummaryDiff(change) {
         if (!change.reasons || change.reasons.length === 0) {
             return '';
         }
@@ -717,133 +899,128 @@ class JarComparison {
         const diffLines = change.reasons.map(detail => {
             let lineClass = 'context';
             let prefix = ' ';
-            let content = detail; // Default to full detail
+            let content = detail;
             
             if (detail.startsWith('- ')) {
                 lineClass = 'removed';
                 prefix = '-';
-                content = detail.substring(2); // Remove "- " prefix
+                content = detail.substring(2);
             } else if (detail.startsWith('+ ')) {
                 lineClass = 'added';
                 prefix = '+';
-                content = detail.substring(2); // Remove "+ " prefix
+                content = detail.substring(2);
             }
-            // If detail doesn't start with "- " or "+ ", use the full detail
             
             return `<div class="diff-line ${lineClass}">${prefix} ${content}</div>`;
         }).join('');
         
+        return `<div class="change-diff">${diffLines}</div>`;
+    }
+    
+    /**
+     * Render a single diff item for side-by-side view
+     */
+    renderDiffItem(change, index) {
+        const changeType = this.getChangeTypeInfo(change.type);
+        const impactInfo = this.getImpactInfo(change.compatibilityImpact);
+        
         return `
-            <div class="change-diff">
-                ${diffLines}
+            <div class="diff-item" data-index="${index}">
+                <div class="diff-header">
+                    <div class="diff-title">
+                        <i class="${changeType.icon}"></i>
+                        <span>${change.className}</span>
+                        ${change.memberName ? `<span class="member-name">.${change.memberName}</span>` : ''}
+                    </div>
+                    <div class="diff-meta">
+                        <span class="change-badge ${changeType.class}">${change.type}</span>
+                        <span class="impact-badge ${impactInfo.class}">${change.compatibilityImpact}</span>
+                    </div>
+                </div>
+                <div class="side-by-side-diff">
+                    <div class="diff-column">
+                        <div class="diff-column-header removed">
+                            <i class="fas fa-minus-circle"></i>
+                            Old Version
+                        </div>
+                        <div class="diff-code-container">
+                            <pre class="diff-code removed">${this.escapeHtml(change.oldSignature || '')}</pre>
+                        </div>
+                    </div>
+                    <div class="diff-column">
+                        <div class="diff-column-header added">
+                            <i class="fas fa-plus-circle"></i>
+                            New Version
+                        </div>
+                        <div class="diff-code-container">
+                            <pre class="diff-code added">${this.escapeHtml(change.newSignature || '')}</pre>
+                        </div>
+                    </div>
+                </div>
+                ${change.description ? `<div class="diff-description">${this.escapeHtml(change.description)}</div>` : ''}
+                ${change.reasons && change.reasons.length > 0 ? this.renderDiffReasons(change.reasons) : ''}
             </div>
         `;
     }
     
     /**
-     * Render technical details
+     * Render reasons list for diff view
      */
-    renderTechnicalDetails(change) {
-        if (!change.metadata) {
-            return '';
-        }
-        
-        const metadata = change.metadata;
-        const details = [];
-        
-        if (metadata.signature) {
-            details.push(`Method signature: ${metadata.signature}`);
-        }
-        if (metadata.visibility) {
-            details.push(`Visibility: ${metadata.visibility}`);
-        }
-        if (metadata.returnType) {
-            details.push(`Return type: ${metadata.returnType}`);
-        }
-        if (metadata.parameters) {
-            details.push(`Parameters: ${metadata.parameters.join(', ')}`);
-        }
-        
-        if (details.length === 0) {
-            return '';
-        }
-        
+    renderDiffReasons(reasons) {
         return `
-            <div class="technical-details">
-                <h4>Technical Details</h4>
+            <div class="diff-reasons">
+                <h5><i class="fas fa-info-circle"></i> Details:</h5>
                 <ul>
-                    ${details.map(detail => `<li>${detail}</li>`).join('')}
+                    ${reasons.map(reason => `<li>${this.escapeHtml(reason)}</li>`).join('')}
                 </ul>
             </div>
         `;
     }
     
     /**
-     * Apply filters to change list using multiselect values
+     * Get change type information
      */
-    applyFilters() {
-        // Get selected values from multiselect dropdowns
-        const selectedTypes = this.getMultiselectValues('changeTypeMultiselect');
-        const selectedImpacts = this.getMultiselectValues('impactMultiselect');
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        
-        const changeItems = document.querySelectorAll('.change-item');
-        console.log('Applying filters to', changeItems.length, 'items');
-        console.log('Filters: types=', selectedTypes, 'impacts=', selectedImpacts, 'search=', searchTerm);
-        
-        let visibleCount = 0;
-        
-        changeItems.forEach(item => {
-            const type = item.dataset.type;
-            const impact = item.dataset.impact;
-            const className = item.dataset.class.toLowerCase();
-            
-            let visible = true;
-            
-            // Apply type filter - show if no types selected OR if item type is in selected types
-            if (selectedTypes.length > 0 && !selectedTypes.includes(type)) {
-                visible = false;
-            }
-            
-            // Apply impact filter - show if no impacts selected OR if item impact is in selected impacts
-            if (selectedImpacts.length > 0 && !selectedImpacts.includes(impact)) {
-                visible = false;
-            }
-            
-            // Apply search filter
-            if (searchTerm && !className.includes(searchTerm)) {
-                visible = false;
-            }
-            
-            item.style.display = visible ? 'block' : 'none';
-            if (visible) visibleCount++;
-        });
-        
-        console.log('Visible items after filtering:', visibleCount);
-        this.updateFilterSummary(visibleCount, changeItems.length);
+    getChangeTypeInfo(type) {
+        const types = {
+            'METHOD_ADDED': { icon: 'fas fa-plus', class: 'added' },
+            'METHOD_REMOVED': { icon: 'fas fa-minus', class: 'removed' },
+            'METHOD_ACCESS_CHANGED': { icon: 'fas fa-edit', class: 'modified' },
+            'FIELD_ADDED': { icon: 'fas fa-plus', class: 'added' },
+            'FIELD_REMOVED': { icon: 'fas fa-minus', class: 'removed' },
+            'FIELD_TYPE_CHANGED': { icon: 'fas fa-edit', class: 'modified' },
+            'FIELD_ACCESS_CHANGED': { icon: 'fas fa-edit', class: 'modified' },
+            'CLASS_ADDED': { icon: 'fas fa-plus', class: 'added' },
+            'CLASS_REMOVED': { icon: 'fas fa-minus', class: 'removed' },
+            'CLASS_MODIFIED': { icon: 'fas fa-edit', class: 'modified' }
+        };
+        return types[type] || { icon: 'fas fa-code', class: 'modified' };
     }
     
     /**
-     * Update filter summary display
+     * Get impact information
      */
-    updateFilterSummary(visibleCount, totalCount) {
-        let summaryElement = document.getElementById('filterSummary');
-        if (!summaryElement) {
-            // Create summary element if it doesn't exist
-            const filterControls = document.querySelector('.filter-controls');
-            summaryElement = document.createElement('div');
-            summaryElement.id = 'filterSummary';
-            summaryElement.className = 'filter-summary';
-            summaryElement.style.cssText = 'margin-top: 1rem; font-size: 0.9rem; color: #666; text-align: center;';
-            filterControls.appendChild(summaryElement);
-        }
-        
-        if (visibleCount === totalCount) {
-            summaryElement.textContent = `Showing all ${totalCount} changes`;
-        } else {
-            summaryElement.textContent = `Showing ${visibleCount} of ${totalCount} changes`;
-        }
+    getImpactInfo(impact) {
+        const impacts = {
+            'BREAKING': { class: 'breaking' },
+            'LOW': { class: 'low' },
+            'NONE': { class: 'none' }
+        };
+        return impacts[impact] || { class: 'none' };
     }
+    
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+
+    
+
     
     /**
      * Export results in specified format
